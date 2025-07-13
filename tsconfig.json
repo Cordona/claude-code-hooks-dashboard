@@ -2,11 +2,7 @@
   "compilerOptions": {
     /* Language and Environment */
     "target": "ES2023",
-    "lib": [
-      "ES2023",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     /* TypeScript 5.7+ Features */
@@ -52,16 +48,8 @@
     "declaration": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src/**/*",
-    "src/**/*.tsx",
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build"
-  ],
+  "include": ["src/**/*", "src/**/*.tsx", "src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "build"],
   "references": [
     {
       "path": "./tsconfig.node.json"
