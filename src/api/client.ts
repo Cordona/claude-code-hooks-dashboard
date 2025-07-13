@@ -2,7 +2,7 @@
 import axios from 'axios'
 
 export const apiClient = axios.create({
-  baseURL: process.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  baseURL: import.meta.env.VITE_BACKEND_BASE_URL ?? 'http://localhost:8085',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -16,8 +16,8 @@ apiClient.interceptors.request.use(
     return config
   },
   (error) => {
-    return Promise.reject(error)
-  }
+    return Promise.reject(error instanceof Error ? error : new Error(String(error)))
+  },
 )
 
 // Response interceptor
@@ -27,6 +27,6 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // Handle global errors
-    return Promise.reject(error)
-  }
+    return Promise.reject(error instanceof Error ? error : new Error(String(error)))
+  },
 )

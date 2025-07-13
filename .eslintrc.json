@@ -13,8 +13,9 @@
   ],
   "ignorePatterns": [
     "dist",
-    "build", 
+    "build",
     "node_modules",
+    "coverage",
     "*.config.js",
     "*.config.ts",
     "*.config.d.ts"
@@ -25,12 +26,7 @@
     "sourceType": "module",
     "project": "./tsconfig.json"
   },
-  "plugins": [
-    "@typescript-eslint",
-    "react",
-    "react-hooks",
-    "react-refresh"
-  ],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "react-refresh"],
   "rules": {
     // TypeScript specific rules
     "@typescript-eslint/no-unused-vars": "error",
@@ -49,11 +45,22 @@
     // General rules
     "no-console": "warn",
     "prefer-const": "error",
-    "no-var": "error"
+    "no-var": "error",
+    // React rules
+    "react/prop-types": "off" // Disabled in favor of TypeScript
   },
   "settings": {
     "react": {
       "version": "detect"
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "src/tests/**/*"],
+      "rules": {
+        "@typescript-eslint/no-deprecated": "off",
+        "@typescript-eslint/ban-ts-comment": "off"
+      }
+    }
+  ]
 }

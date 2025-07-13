@@ -1,2 +1,4 @@
 // Barrel export for React contexts
-// Export theme, auth, and other contexts here
+export * from './ThemeContext'
+export * from './createThemeContext'
+export * from './HelpContext'

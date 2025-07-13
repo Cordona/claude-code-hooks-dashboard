@@ -1,2 +1,2 @@
 // Barrel export for utility functions
-// Export shared utility functions here
+export * from './notification-grouping'

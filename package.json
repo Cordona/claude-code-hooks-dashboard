@@ -4,8 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "cp .environment/.env.local .env && vite",
+    "dev:docker": "cp .environment/.env.docker .env && vite",
+    "build": "cp .environment/.env.local .env && tsc -b && vite build",
+    "build:docker": "cp .environment/.env.docker .env && tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
