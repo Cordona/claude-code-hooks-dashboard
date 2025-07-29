@@ -397,12 +397,12 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
           },
         }}
       >
-        <MoreVert 
-          sx={{ 
-            fontSize: iconSize, 
+        <MoreVert
+          sx={{
+            fontSize: iconSize,
             opacity: 0.8,
             filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15))',
-          }} 
+          }}
         />
       </IconButton>
 

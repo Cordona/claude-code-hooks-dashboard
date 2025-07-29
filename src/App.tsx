@@ -1,23 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
-import { Box, CssBaseline } from '@mui/material'
+import { CssBaseline } from '@mui/material'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from 'react-oidc-context'
 import { ThemeProvider, HelpProvider } from '@/contexts'
+import { oidcConfig } from '@/config/oidc'
+import { useTheme } from '@/hooks'
 import {
-  useTheme,
-  useAudioNotifications,
-  useNotificationData,
-  useSystemNotifications,
-} from '@/hooks'
-import {
-  ConnectionStatus,
-  AudioStatus,
-  Menu,
-  NotificationStatus,
-  ThemeSwitcher,
-  HelpTooltip,
-  NotificationContextGroups,
-  ErrorBoundary,
+  Dashboard,
+  AuthCallback,
 } from '@/components'
 
 const queryClient = new QueryClient({
@@ -34,100 +26,37 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <HelpProvider>
-        <ThemeProvider>
-          <AppContent />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </ThemeProvider>
-      </HelpProvider>
+      <Router>
+        <AuthProvider {...oidcConfig}>
+          <HelpProvider>
+            <ThemeProvider>
+              <AppRoutes />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </ThemeProvider>
+          </HelpProvider>
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   )
 }
 
-function AppContent() {
+function AppRoutes() {
   const { currentTheme } = useTheme()
-  const { notifications, deleteNotification, deleteAllInContext } = useNotificationData()
-
-  // Initialize audio and system notifications
-  // Note: SSE connection is handled by ConnectionStatus component
-  useAudioNotifications()
-  useSystemNotifications()
 
   return (
     <MuiThemeProvider theme={currentTheme}>
       <CssBaseline />
-      <Box
-        sx={{
-          minHeight: '100vh',
-          backgroundColor: 'background.default',
-          position: 'relative',
-        }}
-      >
-        {/* Top Navigation */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 24,
-            left: 24,
-            right: 24,
-            zIndex: 1000,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <ThemeSwitcher />
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <ConnectionStatus size="medium" />
-            <NotificationStatus size="medium" />
-            <AudioStatus size="medium" />
-            <HelpTooltip size="medium" />
-            <Menu size="medium" />
-          </Box>
-        </Box>
+      <Routes>
+        {/* Public Dashboard */}
+        <Route path="/dashboard" element={<Dashboard />} />
 
-        {/* Main Content */}
-        <Box sx={{ padding: 4, paddingTop: 12 }}>
-          {/* Dashboard Header */}
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Box
-              component="h1"
-              sx={{
-                fontSize: '1.75rem',
-                fontWeight: 400,
-                color: 'text.primary',
-                mb: 1,
-                letterSpacing: '0.01em',
-              }}
-            >
-              Claude Code Hooks
-            </Box>
-            <Box
-              component="p"
-              sx={{
-                fontSize: '1rem',
-                color: 'text.secondary',
-                fontWeight: 400,
-                letterSpacing: '0.02em',
-              }}
-            >
-              Observability Dashboard
-            </Box>
-          </Box>
+        {/* OIDC Authentication Callback */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
-          {/* Notifications */}
-          <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-            <ErrorBoundary>
-              {/* Context Groups */}
-              <NotificationContextGroups
-                notifications={notifications}
-                onDeleteNotification={deleteNotification}
-                onDeleteAllInContext={deleteAllInContext}
-              />
-            </ErrorBoundary>
-          </Box>
-        </Box>
-      </Box>
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </MuiThemeProvider>
   )
 }

@@ -33,13 +33,11 @@
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
       "@/hooks/*": ["./src/hooks/*"],
-      "@/api/*": ["./src/api/*"],
       "@/types/*": ["./src/types/*"],
       "@/utils/*": ["./src/utils/*"],
       "@/contexts/*": ["./src/contexts/*"],
       "@/pages/*": ["./src/pages/*"],
       "@/theme/*": ["./src/theme/*"],
-      "@/assets/*": ["./src/assets/*"],
       "@/config/*": ["./src/config/*"],
       "@/tests/*": ["./src/tests/*"],
       "@/lib/*": ["./src/lib/*"]

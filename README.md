@@ -23,6 +23,7 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 ## 🛠️ Tech Stack
 
 ### Core Technologies
+
 - **React 19.1** - Latest React with concurrent features
 - **TypeScript 5.7** - Strict type checking and latest features
 - **Material UI 5.15** - Complete design system and components
@@ -31,6 +32,7 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 - **Axios** - HTTP client with interceptors
 
 ### Development Tools
+
 - **Vite** - Lightning fast build tool and dev server
 - **Vitest** - Unit testing framework
 - **React Testing Library** - Component testing utilities
@@ -49,12 +51,14 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Cordona/claude-code-hooks-dashboard.git
    cd claude-code-hooks-dashboard
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -62,11 +66,13 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 3. **Choose your development environment**
 
    **Option A: Local React + Docker Backend (Recommended)**
+
    ```bash
    npm run dev
    ```
-   
+
    **Option B: Full Docker Environment**
+
    ```bash
    npm run dev:docker
    ```
@@ -79,6 +85,7 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 ### Available Scripts
 
 #### Development
+
 ```bash
 # Local development (React IDE + Backend Docker)
 npm run dev
@@ -91,11 +98,12 @@ npm run type-check
 ```
 
 #### Build & Preview
+
 ```bash
 # Local build
 npm run build
 
-# Docker build  
+# Docker build
 npm run build:docker
 
 # Preview production build
@@ -103,6 +111,7 @@ npm run preview
 ```
 
 #### Code Quality
+
 ```bash
 # Linting
 npm run lint
@@ -114,6 +123,7 @@ npm run format:check
 ```
 
 #### Testing
+
 ```bash
 # Run all tests
 npm test
@@ -139,6 +149,7 @@ The project uses environment-specific configuration files:
 - **`.environment/.env.docker`** - Docker development
 
 Key environment variables:
+
 - `VITE_BACKEND_BASE_URL` - Backend API URL (default: `http://localhost:8085`)
 - `VITE_EVENTS_STREAM_PATH` - SSE endpoint for real-time events
 - `VITE_ENABLE_DEVTOOLS` - Toggle React Query DevTools
@@ -146,6 +157,7 @@ Key environment variables:
 ## 🏗️ Architecture
 
 ### Project Structure
+
 ```
 src/
 ├── api/              # React Query hooks and API client
@@ -176,6 +188,7 @@ src/
 - **Real-time Updates** - SSE connections for live data synchronization
 
 ### Data Flow
+
 1. Components use React Query hooks from `src/api/`
 2. API client handles HTTP requests with Axios interceptors
 3. Server state managed by React Query cache
@@ -211,7 +224,7 @@ npm run test:ui
 
 ## 📚 Documentation
 
-- [Development Guidelines](.claude/REACT_AND_TYPESCRIPT_DEV_GUIDELINES.md) - Architectural patterns and best practices
+- [Development Guidelines](.claude/context/REACT_AND_TYPESCRIPT_DEV_GUIDELINES.md_DEV_GUIDELINES.md) - Architectural patterns and best practices
 - [Project Instructions](CLAUDE.md) - Claude Code integration guidelines
 
 ## 🤝 Contributing
@@ -277,7 +290,7 @@ If you have any questions or need help:
 
 - Open an [issue](https://github.com/Cordona/claude-code-hooks-dashboard/issues)
 - Check the [documentation](CLAUDE.md)
-- Review the [development guidelines](.claude/REACT_AND_TYPESCRIPT_DEV_GUIDELINES.md)
+- Review the [development guidelines](.claude/context/REACT_AND_TYPESCRIPT_DEV_GUIDELINES.md_DEV_GUIDELINES.md)
 
 ---
 

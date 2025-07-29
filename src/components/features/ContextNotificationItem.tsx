@@ -66,9 +66,10 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
               color: 'text.secondary',
               minWidth: '60px',
               mr: 2,
-              textShadow: theme.palette.mode === 'light' 
-                ? '0 1px 2px rgba(0, 0, 0, 0.1)' 
-                : '0 1px 2px rgba(0, 0, 0, 0.3)',
+              textShadow:
+                theme.palette.mode === 'light'
+                  ? '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  : '0 1px 2px rgba(0, 0, 0, 0.3)',
             }}
           >
             {notification.displayTime}
@@ -99,9 +100,10 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                 color: 'text.secondary',
                 fontSize: '0.75rem',
                 mt: 0.25,
-                textShadow: theme.palette.mode === 'light' 
-                  ? '0 1px 2px rgba(0, 0, 0, 0.1)' 
-                  : '0 1px 2px rgba(0, 0, 0, 0.3)',
+                textShadow:
+                  theme.palette.mode === 'light'
+                    ? '0 1px 2px rgba(0, 0, 0, 0.1)'
+                    : '0 1px 2px rgba(0, 0, 0, 0.3)',
               }}
             >
               {notification.displayTime} • {notification.displayDate}
@@ -121,9 +123,10 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
               minWidth: '96px',
               textAlign: 'right',
               mr: 2,
-              textShadow: theme.palette.mode === 'light' 
-                ? '0 1px 2px rgba(0, 0, 0, 0.1)' 
-                : '0 1px 2px rgba(0, 0, 0, 0.3)',
+              textShadow:
+                theme.palette.mode === 'light'
+                  ? '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  : '0 1px 2px rgba(0, 0, 0, 0.3)',
             }}
           >
             {notification.displayDate}

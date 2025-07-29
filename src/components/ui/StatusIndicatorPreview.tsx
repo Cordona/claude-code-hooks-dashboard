@@ -7,7 +7,9 @@ interface StatusIndicatorPreviewProps {
     | 'enabled'
     | 'disabled'
     | 'connected'
+    | 'connecting'
     | 'disconnected'
+    | 'dormant'
     | 'ready'
     | 'waiting'
     | 'not-supported'
@@ -21,7 +23,10 @@ export const StatusIndicatorPreview: React.FC<StatusIndicatorPreviewProps> = Rea
 
     const getStatusColor = (): string => {
       if (type === 'connection') {
-        return status === 'connected' ? theme.palette.success.main : theme.palette.error.main
+        if (status === 'connected') return theme.palette.success.main
+        if (status === 'connecting') return '#2196f3' // Blue for connecting
+        if (status === 'dormant') return '#9e9e9e' // Gray for dormant/authentication required
+        return theme.palette.error.main // disconnected
       } else if (type === 'notification') {
         return status === 'enabled' ? theme.palette.info.main : theme.palette.warning.main
       } else if (type === 'audio') {
@@ -32,7 +37,7 @@ export const StatusIndicatorPreview: React.FC<StatusIndicatorPreviewProps> = Rea
       return theme.palette.text.secondary
     }
 
-    const shouldPulse = status === 'disconnected' || status === 'disabled' || status === 'waiting'
+    const shouldPulse = status === 'disconnected' || status === 'disabled' || status === 'waiting' || status === 'connecting'
 
     return (
       <Box
