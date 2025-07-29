@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import { Box, Tooltip } from '@mui/material'
-import { useSSEConnection } from '@/hooks'
+import { useSSEConnection, useAuthStatus } from '@/hooks'
 
 interface ConnectionStatusProps {
   size?: 'small' | 'medium' | 'large'
@@ -9,7 +9,11 @@ interface ConnectionStatusProps {
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
   ({ size = 'small' }) => {
-    const { isConnected, isConnecting, error } = useSSEConnection()
+    const { isAuthenticated, user } = useAuthStatus()
+    const { isConnected, isConnecting, error, initializingUser, initializationError } = useSSEConnection({
+      isAuthenticated,
+      accessToken: user?.access_token,
+    })
 
     const dotSize = useMemo(() => {
       switch (size) {
@@ -25,12 +29,22 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
     }, [size])
 
     const getStatusColor = (): string => {
-      if (isConnecting) return '#d32f2f' // Dark red
-      if (isConnected) return '#4caf50' // Brighter green (20% brighter)
-      return '#f44336' // Red
+      // If not authenticated, show neutral state
+      if (!isAuthenticated) return '#9e9e9e' // Gray for dormant
+      
+      if (initializingUser) return '#ff9800' // Orange for initialization
+      if (initializationError) return '#f44336' // Red for initialization error
+      if (isConnecting) return '#2196f3' // Blue for connecting
+      if (isConnected) return '#4caf50' // Green for connected
+      return '#f44336' // Red for disconnected
     }
 
     const getStatusText = (): string => {
+      // If not authenticated, show dormant state
+      if (!isAuthenticated) return 'Authentication required'
+      
+      if (initializingUser) return 'Initializing your account...'
+      if (initializationError) return `Initialization failed: ${initializationError}`
       if (isConnecting) return 'Connecting to service...'
       if (isConnected) return 'Connected to service'
       if (error) return `Disconnected: ${error}`
@@ -38,6 +52,11 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
     }
 
     const getAriaLabel = (): string => {
+      // If not authenticated, show dormant state
+      if (!isAuthenticated) return 'Authentication required'
+      
+      if (initializingUser) return 'Initializing account'
+      if (initializationError) return 'Initialization failed'
       if (isConnecting) return 'Service connecting'
       if (isConnected) return 'Service connected'
       return 'Service disconnected'
@@ -54,10 +73,10 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
             height: dotSize,
             borderRadius: '50%',
             backgroundColor: getStatusColor(),
-            opacity: isConnecting ? 0.6 : 1,
+            opacity: (isAuthenticated && (isConnecting || initializingUser)) ? 0.6 : 1,
             transition: 'all 0.3s ease-in-out',
             cursor: 'default',
-            animation: isConnecting ? 'pulse 1.5s infinite' : 'none',
+            animation: (isAuthenticated && (isConnecting || initializingUser)) ? 'pulse 1.5s infinite' : 'none',
             '@keyframes pulse': {
               '0%': {
                 opacity: 0.6,

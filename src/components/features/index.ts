@@ -3,3 +3,5 @@
 export * from './NotificationContextGroups'
 export * from './NotificationContextCard'
 export * from './ContextNotificationItem'
+export * from './Dashboard'
+export * from './auth'

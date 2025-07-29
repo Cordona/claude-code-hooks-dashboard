@@ -118,9 +118,10 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = React.memo(({ size = 'med
             color: 'inherit',
             lineHeight: 1,
             userSelect: 'none',
-            textShadow: theme.palette.mode === 'light' 
-              ? '0 1px 2px rgba(0, 0, 0, 0.1)' 
-              : '0 1px 2px rgba(0, 0, 0, 0.3)',
+            textShadow:
+              theme.palette.mode === 'light'
+                ? '0 1px 2px rgba(0, 0, 0, 0.1)'
+                : '0 1px 2px rgba(0, 0, 0, 0.3)',
           }}
         >
           ?
@@ -191,6 +192,18 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = React.memo(({ size = 'med
             >
               Connection status
             </Typography>
+            <StatusIndicatorPreview
+              type="connection"
+              status="dormant"
+              label="Authentication required"
+              size={10}
+            />
+            <StatusIndicatorPreview
+              type="connection"
+              status="connecting"
+              label="Connecting to service"
+              size={10}
+            />
             <StatusIndicatorPreview
               type="connection"
               status="connected"

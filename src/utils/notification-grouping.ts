@@ -54,11 +54,10 @@ export const groupNotificationsByContext = (
   )
 }
 
-
 /**
  * Formats context path into user-friendly display name
  * Extracts last folder name and converts to a title case
- * 
+ *
  * Examples:
  * ~/IdeaProjects/cordona/claude-code-hooks-dashboard → Claude Code Hooks Dashboard
  * ~/projects/my_awesome_project → My Awesome Project
@@ -71,7 +70,7 @@ export const formatContextDisplayName = (contextPath: string): string => {
 
   // Extract the last folder name from the path
   const lastFolder = contextPath.split(/[/\\]/).pop() ?? ''
-  
+
   if (!lastFolder) {
     return 'General'
   }
@@ -85,7 +84,7 @@ export const formatContextDisplayName = (contextPath: string): string => {
   // Convert to a title case (capitalize the first letter of each word)
   const titleCased = cleanedName
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ')
 
   return titleCased || 'General'
@@ -98,7 +97,6 @@ export const formatContextDisplayName = (contextPath: string): string => {
 export const shortenContextPath = (contextPath: string): string => {
   return formatContextDisplayName(contextPath)
 }
-
 
 /**
  * Empty state messages for when there are no notifications
