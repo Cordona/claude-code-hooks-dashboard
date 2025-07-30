@@ -10,26 +10,63 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 
 ## ✨ Features
 
-- **Real-time Notifications** 📡 - Live updates via Server-Sent Events (SSE)
-- **Audio Notifications** 🔊 - System-integrated sound alerts
+### 🔐 Authentication & Security
+- **OAuth2/OIDC Integration** - Secure authentication with Keycloak
+- **JWT Token Management** - Automatic token refresh and session handling
+- **Role-based Access Control** - Protected routes and API endpoints
+
+### 🔑 API Key Management
+- **API Key Generation** - Secure multi-step wizard for creating Claude Code API keys
+- **Permission Configuration** - Granular permission settings (hooks:write, hooks:read, admin:all)
+- **Expiration Management** - Calendar-based expiration date selection
+- **Security-First UX** - "Show once only" pattern with copy functionality
+- **Key Details Display** - Complete key information with inline formatting
+
+### 📡 Real-time Notifications
+- **Live Updates** - Server-Sent Events (SSE) for real-time notification streaming
+- **Context Grouping** - Notifications organized by project context
+- **Bulk Operations** - Delete individual notifications or entire contexts
+- **Audio Notifications** 🔊 - System-integrated sound alerts with permission management
+- **Notification Persistence** - Local storage with automatic cleanup
+
+### 🎨 User Experience
 - **Theme Switching** 🌙 - Light/dark mode with Material UI theming
-- **Connection Monitoring** 📊 - Real-time connection status tracking
-- **Notification Management** 📋 - Advanced table interface with filtering
-- **Help System** ❓ - Contextual tooltips and guidance
-- **Responsive Design** 📱 - Mobile-first approach with Material UI
+- **Connection Monitoring** 📊 - Real-time SSE connection status tracking
+- **Help System** ❓ - Contextual tooltips and interactive guidance
+- **Responsive Design** 📱 - Mobile-first approach optimized for all devices
+- **Loading States** - Comprehensive loading indicators and skeleton screens
+
+### 🛠️ Developer Features
 - **Type Safety** 🛡️ - Full TypeScript coverage with strict mode
 - **Modern Architecture** ⚡ - Component-level data fetching with React Query
+- **Error Boundaries** - Graceful error handling and recovery
+- **Performance Optimization** - React 19 transitions and concurrent features
+- **Code Quality** - ESLint, Prettier, and automated testing
 
 ## 🛠️ Tech Stack
 
 ### Core Technologies
 
-- **React 19.1** - Latest React with concurrent features
+- **React 19.1** - Latest React with concurrent features and startTransition
 - **TypeScript 5.7** - Strict type checking and latest features
 - **Material UI 5.15** - Complete design system and components
 - **TanStack React Query 5.17** - Server state management and caching
-- **React Router DOM 6.21** - Client-side routing
-- **Axios** - HTTP client with interceptors
+- **React Router DOM 6.21** - Client-side routing with protected routes
+- **Axios 1.11.0** - HTTP client with JWT interceptors (security patched)
+
+### Authentication & Security
+
+- **react-oidc-context 3.3** - OAuth2/OIDC authentication
+- **oidc-client-ts 3.3** - OpenID Connect client library
+- **Keycloak Integration** - Enterprise-grade identity management
+- **JWT Bearer Tokens** - Automatic token injection and refresh
+
+### UI/UX Libraries
+
+- **@mui/x-date-pickers 8.9** - Calendar and date selection components
+- **@mui/icons-material 5.15** - Comprehensive icon library
+- **@emotion/react & @emotion/styled** - CSS-in-JS styling solution
+- **date-fns 4.1** - Modern date utility library
 
 ### Development Tools
 
@@ -150,9 +187,17 @@ The project uses environment-specific configuration files:
 
 Key environment variables:
 
+#### Backend Configuration
 - `VITE_BACKEND_BASE_URL` - Backend API URL (default: `http://localhost:8085`)
 - `VITE_EVENTS_STREAM_PATH` - SSE endpoint for real-time events
-- `VITE_ENABLE_DEVTOOLS` - Toggle React Query DevTools
+
+#### Authentication (Keycloak OIDC)
+- `VITE_KEYCLOAK_BASE_URL` - Keycloak server URL
+- `VITE_KEYCLOAK_REALM` - Keycloak realm name
+- `VITE_KEYCLOAK_CLIENT_ID` - Keycloak client identifier
+
+#### Development
+- `VITE_ENABLE_DEVTOOLS` - Toggle React Query DevTools in development
 
 ## 🏗️ Architecture
 
@@ -160,40 +205,68 @@ Key environment variables:
 
 ```
 src/
-├── api/              # React Query hooks and API client
-│   ├── client.ts     # Axios client configuration
-│   ├── queries/      # useQuery hooks
-│   └── mutations/    # useMutation hooks
-├── components/       # React components
-│   ├── ui/           # Reusable UI components (MUI-based)
-│   └── features/     # Feature-specific components
-├── hooks/            # Custom React hooks
-├── contexts/         # React contexts (Theme, Help)
-├── types/            # TypeScript type definitions
-├── theme/            # Material UI theme configuration
-├── utils/            # Utility functions
-├── pages/            # Page components
-├── config/           # Configuration files
-├── assets/           # Static assets
-├── lib/              # Third-party integrations
-└── tests/            # Test files
+├── components/         # React components
+│   ├── ui/            # Reusable UI components (MUI-based)
+│   │   ├── Menu.tsx   # Main navigation with API key access
+│   │   ├── ConfirmationDialog.tsx
+│   │   └── DashboardBlurOverlay.tsx
+│   └── features/      # Feature-specific components
+│       ├── NotificationContextCard.tsx  # Context-grouped notifications
+│       ├── NotificationContextGroups.tsx
+│       └── apiKey/    # API Key Management components
+│           ├── ApiKeyGenerationModal.tsx
+│           └── steps/ # Multi-step wizard components
+├── hooks/             # Custom React hooks
+│   ├── useNotificationData.ts    # Notification state management
+│   ├── useSystemNotifications.ts # Browser notifications
+│   ├── useSSEConnection.ts       # Server-Sent Events
+│   └── apiKey/        # API Key management hooks
+├── services/          # API service layer
+│   └── apiKey/        # API Key service client
+│       ├── client.ts  # Axios client with JWT auth
+│       └── index.ts   # Service exports
+├── contexts/          # React contexts (Theme, Help, Auth)
+├── types/             # TypeScript type definitions
+│   ├── apiKey.ts      # API Key related types
+│   └── notifications.ts # Notification types
+├── theme/             # Material UI theme configuration
+├── utils/             # Utility functions
+├── config/            # Configuration files
+├── assets/            # Static assets
+└── tests/             # Test files with MSW mocking
 ```
 
 ### Key Patterns
 
-- **Component-Level Data Fetching** - Components fetch their own data using React Query
-- **Material UI Integration** - All components built on MUI foundation
+- **Multi-Step Wizards** - Complex flows broken into manageable steps (API key generation)
+- **Security-First Design** - "Show once only" patterns, JWT authentication, secure token handling
+- **Real-time State Management** - Optimistic updates with startTransition for React 19 compliance
+- **Context-Based Organization** - Notifications grouped by project context with bulk operations
+- **Material UI Integration** - All components built on MUI foundation with consistent theming
+- **Service Layer Architecture** - Dedicated API clients with JWT interceptors
 - **Path Aliases** - Clean imports with `@/*` mapping to `./src/*`
-- **Strict TypeScript** - Full type coverage with enhanced checking
-- **Real-time Updates** - SSE connections for live data synchronization
+- **Strict TypeScript** - Full type coverage with branded types and Result patterns
 
 ### Data Flow
 
-1. Components use React Query hooks from `src/api/`
-2. API client handles HTTP requests with Axios interceptors
-3. Server state managed by React Query cache
-4. UI state managed with React Context
-5. Real-time updates via `useSSEConnection` hook
+#### Authentication Flow
+1. **OIDC Authentication** - User authenticates with Keycloak
+2. **JWT Token Storage** - Tokens stored in browser session storage
+3. **Automatic Injection** - Axios interceptors add JWT to API requests
+4. **Protected Routes** - Router guards ensure authenticated access
+
+#### API Key Management Flow
+1. **Multi-Step Wizard** - Configuration → Review → Generation → Display
+2. **Backend Integration** - Real API calls to `/api/v1/claude-code/developer/api-key/generate`
+3. **Security Patterns** - One-time display, immediate copy functionality
+4. **State Management** - React state with startTransition for optimal performance
+
+#### Notification Flow
+1. **SSE Connection** - Real-time updates via Server-Sent Events
+2. **Context Grouping** - Notifications organized by project context
+3. **Optimistic Updates** - Immediate UI feedback with server synchronization
+4. **Local Persistence** - Notifications stored in localStorage with cleanup
+5. **Audio Integration** - System notifications with permission management
 
 ## 🧪 Testing
 

@@ -19,9 +19,13 @@ import {
   VolumeUp,
   ExpandMore,
   ExpandLess,
+  Key,
+  Code,
 } from '@mui/icons-material'
 import { useNotifications, useAudioNotifications, useUptime } from '@/hooks'
 import type { MenuItem as MenuItemType } from '@/types'
+import { ApiKeyGenerationModal } from '@/components/features/apiKey/ApiKeyGenerationModal'
+import { DashboardBlurOverlay } from '@/components/features/auth/DashboardBlurOverlay'
 
 interface MenuProps {
   size?: 'small' | 'medium' | 'large'
@@ -31,6 +35,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
   const [isTestingSound, setIsTestingSound] = useState<boolean>(false)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState<boolean>(false)
 
   // Hooks for functionality
   const { isEnabled, isSupported, isPending, requestPermission } = useNotifications()
@@ -77,6 +82,11 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
     }
   }, [audioSupported, audioEnabled, isTestingSound, playTestSound, handleMenuClose])
 
+  const handleGenerateApiKey = useCallback(() => {
+    setApiKeyModalOpen(true)
+    handleMenuClose()
+  }, [handleMenuClose])
+
   const getNotificationMenuText = useCallback((): string => {
     if (!isSupported) return 'Notifications not supported'
     if (isPending) return 'Requesting permission...'
@@ -97,7 +107,24 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
    */
   const menuItems = useMemo(
     (): MenuItemType[] => [
-      // 1. System section (collapsible)
+      // 1. Developer section (collapsible)
+      {
+        id: 'developer',
+        type: 'collapsible',
+        label: 'Developer',
+        icon: <Code sx={{ fontSize: 18, color: 'text.secondary' }} />,
+        items: [
+          {
+            id: 'generate-api-key',
+            type: 'simple',
+            label: 'Generate API Key',
+            icon: <Key sx={{ fontSize: 18, color: 'text.secondary' }} />,
+            onClick: handleGenerateApiKey,
+            disabled: false,
+          },
+        ],
+      },
+      // 2. System section (collapsible)
       {
         id: 'system',
         type: 'collapsible',
@@ -127,7 +154,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
           },
         ],
       },
-      // 2. Diagnostics section (collapsible)
+      // 3. Diagnostics section (collapsible)
       {
         id: 'diagnostics',
         type: 'collapsible',
@@ -153,6 +180,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
       },
     ],
     [
+      handleGenerateApiKey,
       formattedUptime,
       isTracking,
       getNotificationMenuText,
@@ -458,6 +486,20 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
           {menuItems.map(renderMenuItem)}
         </MenuList>
       </Popover>
+
+      <DashboardBlurOverlay 
+        isActive={apiKeyModalOpen}
+        blurIntensity={2.03}
+        onBackdropClick={() => setApiKeyModalOpen(false)}
+      >
+        <ApiKeyGenerationModal
+          open={apiKeyModalOpen}
+          onClose={() => setApiKeyModalOpen(false)}
+          onSuccess={() => {
+            setApiKeyModalOpen(false);
+          }}
+        />
+      </DashboardBlurOverlay>
     </Box>
   )
 })

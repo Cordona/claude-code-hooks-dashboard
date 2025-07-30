@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react'
+import React, { useMemo, useCallback, useState, startTransition } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { DeleteSweep } from '@mui/icons-material'
 import { NotificationContextCard } from '.'
@@ -36,7 +36,7 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
     }, [notifications])
 
     /**
-     * Get random empty state message
+     * Get a random empty state message
      */
     const emptyStateMessage = useMemo(() => {
       return getRandomEmptyStateMessage()
@@ -56,7 +56,9 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
      * Handle purge button click
      */
     const handlePurgeClick = useCallback(() => {
-      setIsPurgeDialogOpen(true)
+      startTransition(() => {
+        setIsPurgeDialogOpen(true)
+      })
     }, [])
 
     /**
@@ -66,15 +68,21 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
       if (!onPurgeAll) return
 
       try {
-        setIsPurging(true)
+        startTransition(() => {
+          setIsPurging(true)
+        })
         onPurgeAll()
-        setIsPurgeDialogOpen(false)
+        startTransition(() => {
+          setIsPurgeDialogOpen(false)
+        })
       } catch (error) {
         // Error handling - could add toast notification here
         // eslint-disable-next-line no-console
         console.error('Failed to purge notifications:', error)
       } finally {
-        setIsPurging(false)
+        startTransition(() => {
+          setIsPurging(false)
+        })
       }
     }, [onPurgeAll])
 
@@ -82,7 +90,9 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
      * Handle purge dialog cancel
      */
     const handlePurgeCancel = useCallback(() => {
-      setIsPurgeDialogOpen(false)
+      startTransition(() => {
+        setIsPurgeDialogOpen(false)
+      })
     }, [])
 
     // Show empty state when no notifications

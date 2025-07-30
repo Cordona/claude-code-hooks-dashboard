@@ -60,13 +60,15 @@ export const useSystemNotifications = (): UseSystemNotificationsReturn => {
     if (!isSupported) return
 
     const currentPermission = Notification.permission as SystemNotificationPermission
-    setState((prev) => ({
-      ...prev,
-      permission: currentPermission,
-      isEnabled: currentPermission === 'granted',
-      isRequesting: false, // Reset requesting state on permission check
-    }))
-  }, [isSupported])
+    startTransition(() => {
+      setState((prev) => ({
+        ...prev,
+        permission: currentPermission,
+        isEnabled: currentPermission === 'granted',
+        isRequesting: false, // Reset requesting state on permission check
+      }))
+    })
+  }, [isSupported, startTransition])
 
   /**
    * Show welcome notification after permission granted

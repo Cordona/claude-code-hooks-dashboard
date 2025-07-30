@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, startTransition } from 'react'
 import { Box, Typography, IconButton, Collapse, useTheme, Paper } from '@mui/material'
 import { ExpandMore, ExpandLess, FolderOutlined, DeleteOutline } from '@mui/icons-material'
 import { ContextNotificationItem } from '.'
@@ -34,7 +34,9 @@ export const NotificationContextCard: React.FC<NotificationContextCardProps> = R
       const storageKey = `context-expanded-${group.contextKey}`
       const stored = localStorage.getItem(storageKey)
       if (stored !== null) {
-        setIsExpanded(JSON.parse(stored))
+        startTransition(() => {
+          setIsExpanded(JSON.parse(stored))
+        })
       }
     }, [group.contextKey])
 
@@ -43,7 +45,9 @@ export const NotificationContextCard: React.FC<NotificationContextCardProps> = R
      */
     const handleToggleExpanded = useCallback((): void => {
       const newExpanded = !isExpanded
-      setIsExpanded(newExpanded)
+      startTransition(() => {
+        setIsExpanded(newExpanded)
+      })
       const storageKey = `context-expanded-${group.contextKey}`
       localStorage.setItem(storageKey, JSON.stringify(newExpanded))
     }, [isExpanded, group.contextKey])
@@ -52,14 +56,18 @@ export const NotificationContextCard: React.FC<NotificationContextCardProps> = R
      * Show confirmation dialog for delete all
      */
     const handleDeleteAllClick = useCallback((): void => {
-      setIsConfirmDialogOpen(true)
+      startTransition(() => {
+        setIsConfirmDialogOpen(true)
+      })
     }, [])
 
     /**
      * Close confirmation dialog
      */
     const handleDialogClose = useCallback((): void => {
-      setIsConfirmDialogOpen(false)
+      startTransition(() => {
+        setIsConfirmDialogOpen(false)
+      })
     }, [])
 
     /**
@@ -67,7 +75,9 @@ export const NotificationContextCard: React.FC<NotificationContextCardProps> = R
      */
     const handleConfirmDeleteAll = useCallback((): void => {
       onDeleteAllInContext(group.contextKey)
-      setIsConfirmDialogOpen(false)
+      startTransition(() => {
+        setIsConfirmDialogOpen(false)
+      })
     }, [group.contextKey, onDeleteAllInContext])
 
     return (
