@@ -18,6 +18,7 @@ export default defineConfig({
       '@/config': resolve(__dirname, './src/config'),
       '@/tests': resolve(__dirname, './src/tests'),
       '@/lib': resolve(__dirname, './src/lib'),
+      '@/services': resolve(__dirname, './src/services'),
     },
   },
   server: {

@@ -101,7 +101,9 @@ export const useNotificationData = () => {
   const deleteNotification = useCallback(
     (id: string): void => {
       // Optimistically update the UI immediately
-      setOptimisticNotifications({ type: 'delete', id })
+      startTransition(() => {
+        setOptimisticNotifications({ type: 'delete', id })
+      })
 
       // Perform actual deletion in transition
       const filterNotifications = (prev: NotificationData[]) =>
@@ -119,7 +121,9 @@ export const useNotificationData = () => {
    */
   const deleteAllNotifications = useCallback((): void => {
     // Optimistically update the UI immediately
-    setOptimisticNotifications({ type: 'deleteAll' })
+    startTransition(() => {
+      setOptimisticNotifications({ type: 'deleteAll' })
+    })
 
     // Perform actual deletion in transition
     startTransition(() => {
@@ -133,7 +137,9 @@ export const useNotificationData = () => {
   const deleteAllInContext = useCallback(
     (contextKey: string): void => {
       // Optimistically update the UI immediately
-      setOptimisticNotifications({ type: 'deleteContext', contextKey })
+      startTransition(() => {
+        setOptimisticNotifications({ type: 'deleteContext', contextKey })
+      })
 
       // Perform actual deletion in transition
       const filterNotifications = (prev: NotificationData[]) =>
