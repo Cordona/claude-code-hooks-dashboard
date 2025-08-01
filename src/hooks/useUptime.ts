@@ -43,15 +43,38 @@ export const useUptime = (config: UptimeConfig = {}): UseUptimeReturn => {
   }, [isTracking])
 
   /**
-   * Reset uptime tracking to zero
+   * Start uptime tracking
    */
-  const reset = useCallback((): void => {
+  const start = useCallback((): void => {
     const now = Date.now()
     setState({
       startTime: now,
       currentTime: now,
       uptime: 0,
     })
+  }, [])
+
+  /**
+   * Stop uptime tracking
+   */
+  const stop = useCallback((): void => {
+    setState({
+      startTime: 0,
+      currentTime: 0,
+      uptime: 0,
+    })
+  }, [])
+
+  /**
+   * Reset uptime tracking to zero (restart if it was running)
+   */
+  const reset = useCallback((): void => {
+    const now = Date.now()
+    setState((prev) => ({
+      startTime: prev.startTime > 0 ? now : 0, // Only restart if it was tracking
+      currentTime: prev.startTime > 0 ? now : 0,
+      uptime: 0,
+    }))
   }, [])
 
   /**
@@ -115,6 +138,8 @@ export const useUptime = (config: UptimeConfig = {}): UseUptimeReturn => {
   return {
     uptime: state.uptime,
     formattedUptime,
+    start,
+    stop,
     reset,
     isTracking,
   }

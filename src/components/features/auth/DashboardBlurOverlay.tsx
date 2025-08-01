@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box, Portal, Paper, Typography, IconButton, Button } from '@mui/material'
 import { Close, Login } from '@mui/icons-material'
 import { useAuth } from 'react-oidc-context'
@@ -113,13 +113,22 @@ export const BlurredUsernameSelection: React.FC<BlurredAuthOverlayProps> = ({
   blurIntensity = 2.03,
 }) => {
   const auth = useAuth()
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const handleLogin = async () => {
     try {
+      setLoginError(null) // Clear any previous errors
       await auth.signinRedirect()
     } catch (error) {
+      // Handle login errors by setting error state and logging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown login error'
+      setLoginError(`Login failed: ${errorMessage}`)
+      
       // eslint-disable-next-line no-console
-      console.error('Login failed:', error)
+      console.error('Login failed')
+      
+      // Error is now handled by updating component state
+      // This allows UI to show error feedback and enables retry
     }
   }
 
@@ -174,6 +183,15 @@ export const BlurredUsernameSelection: React.FC<BlurredAuthOverlayProps> = ({
             👋 Hey there!
           </Typography>
           
+          {loginError && (
+            <Typography 
+              variant="body2" 
+              color="error" 
+              sx={{ mb: 2, p: 1, bgcolor: 'error.light', borderRadius: 1, opacity: 0.7 }}
+            >
+              {loginError}
+            </Typography>
+          )}
           
           <Button
             variant="contained"

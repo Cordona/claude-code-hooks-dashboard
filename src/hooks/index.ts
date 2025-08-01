@@ -1,7 +1,9 @@
 // Barrel export for custom hooks
 export * from './useNotifications'
 export * from './useNotificationData'
-export * from './useSSEConnection'
+export * from './useSSEConnect'
+export * from './useSSEDisconnect'
+export * from './useUserInitialization'
 export * from './useTheme'
 export * from './useHelp'
 export * from './useAudioNotifications'

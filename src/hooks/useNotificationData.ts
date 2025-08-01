@@ -223,7 +223,7 @@ export const useNotificationData = () => {
       }
     }
 
-    // Listen for SSE events dispatched by useSSEConnection
+    // Listen for SSE events dispatched by useSSEConnect
     window.addEventListener('claude-hook-received', handleClaudeHookEvent as EventListener)
 
     return () => {

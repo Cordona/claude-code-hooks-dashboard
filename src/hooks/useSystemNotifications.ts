@@ -43,7 +43,7 @@ export const useSystemNotifications = (): UseSystemNotificationsReturn => {
   const logError = useCallback((message: string, error: unknown): void => {
     if (process.env.NODE_ENV === 'development') {
       // eslint-disable-next-line no-console
-      console.error(`🔔 useSystemNotifications: ${message}`, error)
+      console.error(`useSystemNotifications: ${message}`, error)
     }
   }, [])
 
@@ -236,7 +236,7 @@ export const useSystemNotifications = (): UseSystemNotificationsReturn => {
       }
     }
 
-    // Listen for SSE events dispatched by useSSEConnection
+    // Listen for SSE events dispatched by useSSEConnect
     window.addEventListener('claude-hook-received', handleClaudeHookEvent as EventListener)
 
     return () => {

@@ -25,6 +25,10 @@ export interface UseUptimeReturn {
   formattedUptime: string
   /** Function to reset uptime to zero */
   reset: () => void
+  /** Function to start uptime tracking */
+  start: () => void
+  /** Function to stop uptime tracking */
+  stop: () => void
   /** Whether uptime tracking is active */
   isTracking: boolean
 }

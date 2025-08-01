@@ -21,11 +21,20 @@ import {
   ExpandLess,
   Key,
   Code,
+  Link,
+  AccountBox,
+  ContentCopy,
+  Check,
+  BuildCircle,
+  PriorityHigh,
 } from '@mui/icons-material'
-import { useNotifications, useAudioNotifications, useUptime } from '@/hooks'
-import type { MenuItem as MenuItemType } from '@/types'
+import { useNotifications, useAudioNotifications, useUptime, useAuthStatus } from '@/hooks'
+import type { MenuItem as MenuItemType, SimpleMenuItem, DisplayMenuItem, ClickableDisplayMenuItem, CopyableMenuItem } from '@/types'
 import { ApiKeyGenerationModal } from '@/components/features/apiKey/ApiKeyGenerationModal'
 import { DashboardBlurOverlay } from '@/components/features/auth/DashboardBlurOverlay'
+
+// Type alias for a cleaner subitem union type
+type SubMenuItem = SimpleMenuItem | DisplayMenuItem | ClickableDisplayMenuItem | CopyableMenuItem
 
 interface MenuProps {
   size?: 'small' | 'medium' | 'large'
@@ -36,6 +45,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
   const [isTestingSound, setIsTestingSound] = useState<boolean>(false)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState<boolean>(false)
+  const [copiedItem, setCopiedItem] = useState<string | null>(null)
 
   // Hooks for functionality
   const { isEnabled, isSupported, isPending, requestPermission } = useNotifications()
@@ -45,7 +55,64 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
     isInitialized: audioInitialized,
     playTestSound,
   } = useAudioNotifications()
-  const { formattedUptime, isTracking } = useUptime()
+  // Authentication state
+  const { user } = useAuthStatus()
+  
+  // Listen to SSE connection state from global events (to avoid duplicate connections)
+  const [connectionId, setConnectionId] = React.useState<string | null>(null)
+  const [isConnected, setIsConnected] = React.useState<boolean>(false)
+  
+  React.useEffect(() => {
+    const handleConnectionId = (event: CustomEvent) => {
+      setConnectionId(event.detail.connectionId)
+      setIsConnected(true)
+    }
+    
+    const handleDisconnected = () => {
+      setConnectionId(null)
+      setIsConnected(false)
+    }
+    
+    // Check if connection already exists by looking for connection status in DOM
+    // This helps when Menu component loads after connection is established
+    const checkExistingConnection = () => {
+      const connectionStatus = document.querySelector('[data-testid="connection-status"]')
+      if (connectionStatus && connectionStatus.getAttribute('data-connected') === 'true') {
+        const existingConnectionId = connectionStatus.getAttribute('data-connection-id')
+        if (existingConnectionId) {
+          setConnectionId(existingConnectionId)
+          setIsConnected(true)
+        }
+      }
+    }
+    
+    // Check for existing connection on mount
+    checkExistingConnection()
+    
+    window.addEventListener('sse-connection-id-received', handleConnectionId as EventListener)
+    window.addEventListener('sse-disconnected', handleDisconnected as EventListener)
+    
+    return () => {
+      window.removeEventListener('sse-connection-id-received', handleConnectionId as EventListener)
+      window.removeEventListener('sse-disconnected', handleDisconnected as EventListener)
+    }
+  }, [])
+  
+  // Uptime should only track when SSE service is connected
+  const { formattedUptime, isTracking, start: startUptime, stop: stopUptime } = useUptime({
+    autoStart: false, // Don't auto-start, we'll control it manually
+  })
+  
+  // Control uptime tracking based on SSE connection state
+  React.useEffect(() => {
+    if (isConnected && !isTracking) {
+      // Start tracking when connected
+      startUptime()
+    } else if (!isConnected && isTracking) {
+      // Stop tracking when disconnected
+      stopUptime()
+    }
+  }, [isConnected, isTracking, startUptime, stopUptime])
 
   const isOpen = Boolean(anchorEl)
 
@@ -63,10 +130,10 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
   }, [])
 
   const handleNotificationPermission = useCallback(async () => {
-    if (!isSupported) return
+    if (!isSupported || isEnabled) return
     await requestPermission()
     handleMenuClose()
-  }, [isSupported, requestPermission, handleMenuClose])
+  }, [isSupported, isEnabled, requestPermission, handleMenuClose])
 
   const handleTestSound = useCallback(async () => {
     if (!audioSupported || !audioEnabled || isTestingSound) return
@@ -86,6 +153,45 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
     setApiKeyModalOpen(true)
     handleMenuClose()
   }, [handleMenuClose])
+
+  const handleCopyToClipboard = useCallback(async (text: string | undefined, itemId: string) => {
+    if (!text) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedItem(itemId)
+      setTimeout(() => setCopiedItem(null), 2000)
+    } catch (clipboardError) {
+      // Fallback to selection-based copy if clipboard API fails
+      try {
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-9999px'
+        textArea.style.top = '-9999px'
+        textArea.setAttribute('readonly', '')
+        document.body.appendChild(textArea)
+        
+        textArea.select()
+        textArea.setSelectionRange(0, 99999) // For mobile devices
+        
+        // Modern browsers should support clipboard API, but provide fallback
+        document.body.removeChild(textArea)
+        
+        // If we get here, set as copied anyway since a text was selected
+        setCopiedItem(itemId)
+        setTimeout(() => setCopiedItem(null), 2000)
+      } catch (fallbackError) {
+        // Log fallback error for debugging but don't break functionality
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.warn('Copy fallback failed:', { clipboardError, fallbackError })
+        }
+      }
+    }
+  }, [])
 
   const getNotificationMenuText = useCallback((): string => {
     if (!isSupported) return 'Notifications not supported'
@@ -118,7 +224,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
             id: 'generate-api-key',
             type: 'simple',
             label: 'Generate API Key',
-            icon: <Key sx={{ fontSize: 18, color: 'text.secondary' }} />,
+            icon: <Key sx={{ fontSize: 18, color: '#2d7a32' }} />,
             onClick: handleGenerateApiKey,
             disabled: false,
           },
@@ -132,34 +238,68 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
         icon: <Settings sx={{ fontSize: 18, color: 'text.secondary' }} />,
         items: [
           {
-            id: 'uptime',
-            type: 'display',
-            label: 'Uptime',
-            value: formattedUptime,
-            icon: (
-              <AccessTime sx={{ fontSize: 18, color: isTracking ? '#2d7a32' : 'text.secondary' }} />
-            ),
-          },
-          {
             id: 'notifications',
-            type: 'simple',
-            label: getNotificationMenuText(),
-            icon: (
+            type: 'clickable-display',
+            label: 'Notifications',
+            value: getNotificationMenuText(),
+            icon: isEnabled ? (
               <Notifications
-                sx={{ fontSize: 18, color: isEnabled ? '#2d7a32' : 'text.secondary' }}
+                sx={{ fontSize: 18, color: '#2d7a32' }}
+              />
+            ) : (
+              <PriorityHigh
+                sx={{ fontSize: 18, color: '#f44336' }}
               />
             ),
             onClick: () => void handleNotificationPermission(),
-            disabled: !isSupported || isEnabled || isPending,
+            disabled: !isSupported || isPending || isEnabled,
           },
         ],
       },
-      // 3. Diagnostics section (collapsible)
+      // 3. Debug section (collapsible)
+      {
+        id: 'debug',
+        type: 'collapsible',
+        label: 'Debug',
+        icon: <BugReport sx={{ fontSize: 18, color: 'text.secondary' }} />,
+        items: [
+          {
+            id: 'uptime',
+            type: 'display',
+            label: 'Uptime',
+            value: isTracking ? formattedUptime : 'Not connected',
+            icon: (
+              <AccessTime sx={{ fontSize: 18, color: isTracking ? '#2d7a32' : 'text.disabled' }} />
+            ),
+          },
+          {
+            id: 'connection-id',
+            type: 'copyable',
+            label: 'Connection ID',
+            value: connectionId || (isConnected ? 'Connecting...' : 'Not connected'),
+            ...(connectionId && { copyValue: connectionId }),
+            icon: (
+              <Link sx={{ fontSize: 18, color: (connectionId && isConnected) ? '#2d7a32' : 'text.disabled' }} />
+            ),
+          },
+          {
+            id: 'user-external-id',
+            type: 'copyable',
+            label: 'User ID',
+            value: user?.profile?.sub || 'Not authenticated',
+            ...(user?.profile?.sub && { copyValue: user.profile.sub }),
+            icon: (
+              <AccountBox sx={{ fontSize: 18, color: (user?.profile?.sub && isConnected) ? '#2d7a32' : 'text.disabled' }} />
+            ),
+          },
+        ],
+      },
+      // 4. Diagnostics section (collapsible)
       {
         id: 'diagnostics',
         type: 'collapsible',
         label: 'Diagnostics',
-        icon: <BugReport sx={{ fontSize: 18, color: 'text.secondary' }} />,
+        icon: <BuildCircle sx={{ fontSize: 18, color: 'text.secondary' }} />,
         items: [
           {
             id: 'test-sound',
@@ -181,13 +321,16 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
     ],
     [
       handleGenerateApiKey,
-      formattedUptime,
-      isTracking,
       getNotificationMenuText,
       isEnabled,
       isSupported,
       isPending,
       handleNotificationPermission,
+      formattedUptime,
+      isTracking,
+      connectionId,
+      isConnected,
+      user?.profile?.sub,
       getAudioTestMenuText,
       audioEnabled,
       audioSupported,
@@ -197,180 +340,439 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
   )
 
   /**
-   * Render individual menu item based on type
+   * Render display type menu item
    */
-  const renderMenuItem = useCallback(
-    (item: MenuItemType): React.ReactElement | null => {
-      if (item.type === 'display') {
-        return (
-          <MenuItem
-            key={item.id}
-            disabled
-            sx={{
-              opacity: 1,
-              cursor: 'default',
-              borderRadius: 1,
-              mx: 1,
-              minHeight: 36,
-              '&:hover': {
-                backgroundColor: 'transparent',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={
-                <Typography variant="body2" sx={{ fontWeight: 400 }}>
-                  {item.label}: {item.value}
-                </Typography>
-              }
-            />
-          </MenuItem>
-        )
-      }
+  const renderDisplayItem = useCallback((item: MenuItemType) => {
+    if (item.type !== 'display') return null
+    return (
+      <MenuItem
+        key={item.id}
+        disabled
+        sx={{
+          opacity: 1,
+          cursor: 'default',
+          borderRadius: 1,
+          mx: 1,
+          minHeight: 36,
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
+        <ListItemText
+          primary={
+            <Typography variant="body2" sx={{ fontWeight: 400 }}>
+              {item.label}: {item.value}
+            </Typography>
+          }
+        />
+      </MenuItem>
+    )
+  }, [])
 
-      if (item.type === 'simple') {
-        return (
-          <MenuItem
-            key={item.id}
-            onClick={() => {
-              item.onClick()
-              handleMenuClose()
+  /**
+   * Render simple type menu item
+   */
+  const renderSimpleItem = useCallback((item: MenuItemType) => {
+    if (item.type !== 'simple') return null
+    return (
+      <MenuItem
+        key={item.id}
+        onClick={() => {
+          item.onClick()
+          handleMenuClose()
+        }}
+        disabled={item.disabled ?? false}
+        sx={{
+          borderRadius: 1,
+          mx: 1,
+          minHeight: 36,
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
+        <ListItemText
+          primary={
+            <Typography variant="body2" sx={{ fontWeight: 400 }}>
+              {item.label}
+            </Typography>
+          }
+        />
+      </MenuItem>
+    )
+  }, [handleMenuClose])
+
+  /**
+   * Render copyable type menu item
+   */
+  const renderCopyableItem = useCallback((item: MenuItemType) => {
+    if (item.type !== 'copyable') return null
+    const canCopy = Boolean(item.copyValue)
+    const isCopied = copiedItem === item.id
+    
+    return (
+      <Box
+        key={item.id}
+        sx={{
+          borderRadius: 1,
+          mx: 1,
+          minHeight: 36,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          px: 2,
+          py: 1,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
+          <Typography variant="body2" sx={{ fontWeight: 400 }}>
+            {item.label}: {item.value}
+          </Typography>
+        </Box>
+        {canCopy && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              void handleCopyToClipboard(item.copyValue, item.id)
             }}
-            disabled={item.disabled ?? false}
             sx={{
-              borderRadius: 1,
-              mx: 1,
-              minHeight: 36,
-              transition: 'all 0.15s ease-in-out',
+              width: 24,
+              height: 24,
+              ml: 1,
+              opacity: 0.8,
+              transition: 'all 0.2s ease-in-out',
               '&:hover': {
+                opacity: 1,
                 backgroundColor: 'action.hover',
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={
-                <Typography variant="body2" sx={{ fontWeight: 400 }}>
-                  {item.label}
-                </Typography>
-              }
-            />
-          </MenuItem>
-        )
-      }
+            {isCopied ? (
+              <Check 
+                sx={{ 
+                  fontSize: 14, 
+                  color: '#4caf50',
+                  transition: 'all 0.2s ease-in-out'
+                }} 
+              />
+            ) : (
+              <ContentCopy 
+                sx={{ 
+                  fontSize: 14, 
+                  color: 'primary.main',
+                  opacity: 0.9
+                }} 
+              />
+            )}
+          </IconButton>
+        )}
+      </Box>
+    )
+  }, [copiedItem, handleCopyToClipboard])
 
-      if (item.type === 'collapsible') {
-        const isExpanded = expandedSection === item.id
-
-        return (
-          <Box key={item.id}>
-            <MenuItem
-              onClick={() => handleSectionToggle(item.id)}
-              sx={{
-                borderRadius: 1,
-                mx: 1,
-                minHeight: 36,
-                transition: 'all 0.15s ease-in-out',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                },
+  /**
+   * Render simple subitem within a collapsible section
+   */
+  const renderSimpleSubItem = useCallback((subItem: SubMenuItem) => {
+    if (subItem.type !== 'simple') return null
+    return (
+      <MenuItem
+        key={subItem.id}
+        onClick={() => {
+          subItem.onClick()
+          handleMenuClose()
+        }}
+        disabled={subItem.disabled ?? false}
+        sx={{
+          borderRadius: 1,
+          mx: 1,
+          minHeight: 32,
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 32 }}>{subItem.icon}</ListItemIcon>
+        <ListItemText
+          primary={
+            <Typography
+              variant="body2"
+              sx={{ 
+                fontWeight: 400, 
+                fontSize: '0.875rem',
+                color: 'text.primary'
               }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
-              <ListItemText
-                primary={
-                  <Typography variant="body2" sx={{ fontWeight: 400 }}>
-                    {item.label}
-                  </Typography>
-                }
-              />
-              {isExpanded ? (
-                <ExpandLess sx={{ fontSize: 18, color: 'text.secondary' }} />
-              ) : (
-                <ExpandMore sx={{ fontSize: 18, color: 'text.secondary' }} />
-              )}
-            </MenuItem>
+              {subItem.label}
+            </Typography>
+          }
+        />
+      </MenuItem>
+    )
+  }, [handleMenuClose])
 
-            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              <Box sx={{ pl: 2 }}>
-                {item.items.map((subItem) => {
-                  if (subItem.type === 'simple') {
-                    return (
-                      <MenuItem
-                        key={subItem.id}
-                        onClick={() => {
-                          subItem.onClick()
-                          handleMenuClose()
-                        }}
-                        disabled={subItem.disabled ?? false}
-                        sx={{
-                          borderRadius: 1,
-                          mx: 1,
-                          minHeight: 32,
-                          transition: 'all 0.15s ease-in-out',
-                          '&:hover': {
-                            backgroundColor: 'action.hover',
-                          },
-                        }}
-                      >
-                        <ListItemIcon sx={{ minWidth: 32 }}>{subItem.icon}</ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 400, fontSize: '0.875rem' }}
-                            >
-                              {subItem.label}
-                            </Typography>
-                          }
-                        />
-                      </MenuItem>
-                    )
-                  }
-
-                  if (subItem.type === 'display') {
-                    return (
-                      <MenuItem
-                        key={subItem.id}
-                        disabled
-                        sx={{
-                          borderRadius: 1,
-                          mx: 1,
-                          minHeight: 32,
-                          opacity: 1,
-                          cursor: 'default',
-                          '&:hover': {
-                            backgroundColor: 'transparent',
-                          },
-                        }}
-                      >
-                        <ListItemIcon sx={{ minWidth: 32 }}>{subItem.icon}</ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 400, fontSize: '0.875rem' }}
-                            >
-                              {subItem.label}: {subItem.value}
-                            </Typography>
-                          }
-                        />
-                      </MenuItem>
-                    )
-                  }
-
-                  return null
-                })}
-              </Box>
-            </Collapse>
-          </Box>
-        )
+  /**
+   * Render display subitem within a collapsible section
+   */
+  const renderDisplaySubItem = useCallback((subItem: SubMenuItem) => {
+    if (subItem.type !== 'display' && subItem.type !== 'clickable-display') return null
+    const shouldBeGrey = subItem.id === 'uptime' && !isTracking
+    const isNotification = subItem.id === 'notifications'
+    const isClickable = subItem.type === 'clickable-display' && !subItem.disabled
+    
+    const getNotificationColors = () => {
+      if (isNotification) {
+        return {
+          labelColor: 'text.primary', // White/primary text for "Notifications" label
+          valueColor: isEnabled ? '#2d7a32' : '#f44336' // Green/red for status
+        }
       }
+      return {
+        labelColor: shouldBeGrey ? 'text.disabled' : 'text.primary',
+        valueColor: shouldBeGrey ? 'text.disabled' : 'text.secondary'
+      }
+    }
+    
+    const { labelColor, valueColor } = getNotificationColors()
+    
+    return (
+      <Box
+        key={subItem.id}
+        onClick={isClickable ? () => { 
+          if (subItem.type === 'clickable-display') {
+            subItem.onClick()
+            handleMenuClose()
+          }
+        } : undefined}
+        sx={{
+          borderRadius: 1,
+          mx: 1,
+          minHeight: 48,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          px: 2,
+          py: 1,
+          cursor: isClickable ? 'pointer' : 'default',
+          transition: 'all 0.15s ease-in-out',
+          '&:hover': isClickable ? {
+            backgroundColor: 'action.hover',
+          } : {}
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', flex: 1 }}>
+          <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>{subItem.icon}</ListItemIcon>
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ 
+                fontWeight: 400, 
+                fontSize: '0.875rem',
+                color: labelColor,
+                mb: 0.5
+              }}
+            >
+              {subItem.label}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ 
+                fontWeight: 400, 
+                fontSize: '0.75rem',
+                color: valueColor,
+                fontFamily: isNotification ? 'inherit' : 'monospace'
+              }}
+            >
+              {subItem.value}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    )
+  }, [isTracking, isEnabled, handleMenuClose])
 
-      return null
+  /**
+   * Render copyable subitem within a collapsible section
+   */
+  const renderCopyableSubItem = useCallback((subItem: SubMenuItem) => {
+    if (subItem.type !== 'copyable') return null
+    const canCopy = Boolean(subItem.copyValue)
+    const isCopied = copiedItem === subItem.id
+    const shouldBeGrey = (subItem.id === 'connection-id' || subItem.id === 'user-external-id') && !isConnected
+    
+    return (
+      <Box
+        key={subItem.id}
+        sx={{
+          borderRadius: 1,
+          mx: 1,
+          minHeight: 48,
+          display: 'flex',
+          alignItems: 'flex-start',
+          px: 2,
+          py: 1,
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>{subItem.icon}</ListItemIcon>
+        <Box sx={{ flex: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{ 
+              fontWeight: 400, 
+              fontSize: '0.875rem',
+              color: shouldBeGrey ? 'text.disabled' : 'text.primary',
+              mb: 0.5
+            }}
+          >
+            {subItem.label}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography
+              variant="body2"
+              sx={{ 
+                fontWeight: 400, 
+                fontSize: '0.75rem',
+                color: shouldBeGrey ? 'text.disabled' : 'text.secondary',
+                fontFamily: 'monospace',
+                wordBreak: 'break-all'
+              }}
+            >
+              {subItem.value}
+            </Typography>
+            {canCopy && (
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  void handleCopyToClipboard(subItem.copyValue, subItem.id)
+                }}
+                sx={{
+                  width: 20,
+                  height: 20,
+                  ml: 1,
+                  opacity: 0.8,
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    opacity: 1,
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                {isCopied ? (
+                  <Check 
+                    sx={{ 
+                      fontSize: 12, 
+                      color: '#4caf50',
+                      transition: 'all 0.2s ease-in-out'
+                    }} 
+                  />
+                ) : (
+                  <ContentCopy 
+                    sx={{ 
+                      fontSize: 12, 
+                      color: 'primary.main',
+                      opacity: 0.9
+                    }} 
+                  />
+                )}
+              </IconButton>
+            )}
+          </Box>
+        </Box>
+      </Box>
+    )
+  }, [copiedItem, isConnected, handleCopyToClipboard])
+
+  /**
+   * Render subitem within a collapsible section
+   */
+  const renderSubItem = useCallback((subItem: SubMenuItem) => {
+    switch (subItem.type) {
+      case 'simple':
+        return renderSimpleSubItem(subItem)
+      case 'display':
+      case 'clickable-display':
+        return renderDisplaySubItem(subItem)
+      case 'copyable':
+        return renderCopyableSubItem(subItem)
+      default:
+        return null
+    }
+  }, [renderSimpleSubItem, renderDisplaySubItem, renderCopyableSubItem])
+
+  /**
+   * Render collapsible type menu item
+   */
+  const renderCollapsibleItem = useCallback((item: MenuItemType) => {
+    if (item.type !== 'collapsible') return null
+    const isExpanded = expandedSection === item.id
+
+    return (
+      <Box key={item.id}>
+        <MenuItem
+          onClick={() => handleSectionToggle(item.id)}
+          sx={{
+            borderRadius: 1,
+            mx: 1,
+            minHeight: 36,
+            transition: 'all 0.15s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
+          <ListItemText
+            primary={
+              <Typography variant="body2" sx={{ fontWeight: 400 }}>
+                {item.label}
+              </Typography>
+            }
+          />
+          {isExpanded ? (
+            <ExpandLess sx={{ fontSize: 18, color: 'text.secondary' }} />
+          ) : (
+            <ExpandMore sx={{ fontSize: 18, color: 'text.secondary' }} />
+          )}
+        </MenuItem>
+
+        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pl: 2 }}>
+            {item.items.map(renderSubItem)}
+          </Box>
+        </Collapse>
+      </Box>
+    )
+  }, [expandedSection, handleSectionToggle, renderSubItem])
+
+  /**
+   * Render individual menu item based on type
+   */
+  const renderMenuItem = useCallback(
+    (item: MenuItemType): React.ReactElement | null => {
+      switch (item.type) {
+        case 'display':
+          return renderDisplayItem(item)
+        case 'simple':
+          return renderSimpleItem(item)
+        case 'copyable':
+          return renderCopyableItem(item)
+        case 'collapsible':
+          return renderCollapsibleItem(item)
+        default:
+          return null
+      }
     },
-    [expandedSection, handleSectionToggle, handleMenuClose],
+    [renderDisplayItem, renderSimpleItem, renderCopyableItem, renderCollapsibleItem],
   )
 
   const iconSize = useMemo(() => {
@@ -450,7 +852,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
         sx={{
           mt: 1,
           '& .MuiPopover-paper': {
-            minWidth: 200,
+            width: 600,
             borderRadius: 2,
             backgroundColor: 'background.paper',
             border: '1px solid',

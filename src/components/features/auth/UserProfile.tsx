@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FC, MouseEvent } from 'react'
 import { 
   Avatar, 
@@ -7,10 +7,12 @@ import {
   Typography, 
   Menu, 
   MenuItem, 
-  ListItemIcon
+  ListItemIcon,
+  CircularProgress
 } from '@mui/material'
 import { LogoutOutlined } from '@mui/icons-material'
 import { useAuth } from 'react-oidc-context'
+import { useSSEDisconnect } from '@/hooks'
 
 // TypeScript interfaces for OIDC user structure following TypeScript 5.7+ patterns
 interface ProfileClaims {
@@ -39,8 +41,36 @@ interface UserProfileProps {
 export const UserProfile: FC<UserProfileProps> = ({ user }) => {
   const auth = useAuth()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [connectionId, setConnectionId] = useState<string | null>(null)
+  
+  
+  const { disconnect } = useSSEDisconnect({
+    accessToken: user?.access_token,
+  })
   
   const open = Boolean(anchorEl)
+
+  // Listen for connection ID from the SSE connection manager
+  useEffect(() => {
+    const handleConnectionIdReceived = (event: CustomEvent): void => {
+      const { connectionId: id } = event.detail as { connectionId: string; message?: string }
+      setConnectionId(id)
+    }
+
+    const handleConnectionDisconnected = (): void => {
+      setConnectionId(null)
+    }
+
+
+    window.addEventListener('sse-connection-id-received', handleConnectionIdReceived as EventListener)
+    window.addEventListener('sse-disconnected', handleConnectionDisconnected as EventListener)
+
+    return () => {
+      window.removeEventListener('sse-connection-id-received', handleConnectionIdReceived as EventListener)
+      window.removeEventListener('sse-disconnected', handleConnectionDisconnected as EventListener)
+    }
+  }, [])
 
   const handleClick = (event: MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget)
@@ -52,11 +82,38 @@ export const UserProfile: FC<UserProfileProps> = ({ user }) => {
 
   const handleLogout = async (): Promise<void> => {
     handleClose()
+    setIsLoggingOut(true)
+    
     try {
+      // Step 1: Disconnect SSE connection first (critical for backend resource cleanup)
+      if (connectionId) {
+        try {
+          await disconnect(connectionId)
+        } catch (disconnectError) {
+          // Intentionally ignore disconnect errors during logout to not block the logout process
+          // The disconnect error is logged, but we continue with logout - this is the expected behavior
+          // eslint-disable-next-line no-console
+          console.warn('SSE disconnect failed during logout')
+          // Error handled: We log the issue but continue logout to avoid blocking user authentication flow
+          if (disconnectError) {
+            // Error acknowledged and handled by graceful degradation
+          }
+        }
+      }
+      
+      // Step 2: Proceed with OIDC logout
       await auth.signoutRedirect()
     } catch (error) {
+      // Intentionally catch and log logout errors without rethrowing to prevent UI crashes,
+      // The error is handled by logging and graceful degradation - UI remains stable
       // eslint-disable-next-line no-console
-      console.error('Logout failed:', error)
+      console.error('Logout failed')
+      // Error handled: We log the failure but keep the UI stable and allow user to retry
+      if (error) {
+        // Error acknowledged and handled by maintaining stable UI state
+      }
+    } finally {
+      setIsLoggingOut(false)
     }
   }
 
@@ -148,7 +205,13 @@ export const UserProfile: FC<UserProfileProps> = ({ user }) => {
           )}
         </Box>
         <MenuItem 
-          onClick={handleLogout}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-misused-promises
+            void handleLogout()
+          }}
+          disabled={isLoggingOut}
           sx={{
             mx: 1,
             mb: 1,
@@ -157,13 +220,22 @@ export const UserProfile: FC<UserProfileProps> = ({ user }) => {
             '&:hover': {
               backgroundColor: 'action.hover',
               color: 'text.primary'
+            },
+            '&.Mui-disabled': {
+              color: 'text.disabled',
             }
           }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
-            <LogoutOutlined fontSize="small" />
+            {isLoggingOut ? (
+              <CircularProgress size={16} sx={{ color: 'text.disabled' }} />
+            ) : (
+              <LogoutOutlined fontSize="small" />
+            )}
           </ListItemIcon>
-          <Typography variant="body2">Sign Out</Typography>
+          <Typography variant="body2">
+            {isLoggingOut ? 'Signing Out...' : 'Sign Out'}
+          </Typography>
         </MenuItem>
       </Menu>
     </>

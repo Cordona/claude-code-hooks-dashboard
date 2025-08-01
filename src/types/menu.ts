@@ -40,11 +40,35 @@ export interface DisplayMenuItem extends BaseMenuItem {
 }
 
 /**
+ * Clickable display menu item (like notifications)
+ */
+export interface ClickableDisplayMenuItem extends BaseMenuItem {
+  /** Value to display */
+  value: string
+  /** Click handler for the menu item */
+  onClick: () => void
+  /** Type identifier */
+  type: 'clickable-display'
+}
+
+/**
+ * Copyable display menu item with copy-to-clipboard functionality
+ */
+export interface CopyableMenuItem extends BaseMenuItem {
+  /** Value to display */
+  value: string
+  /** Value to copy to clipboard (may differ from display value) */
+  copyValue?: string
+  /** Type identifier */
+  type: 'copyable'
+}
+
+/**
  * Collapsible section with nested items
  */
 export interface CollapsibleSection extends BaseMenuItem {
   /** Array of items within this section */
-  items: (SimpleMenuItem | DisplayMenuItem)[]
+  items: (SimpleMenuItem | DisplayMenuItem | ClickableDisplayMenuItem | CopyableMenuItem)[]
   /** Type identifier */
   type: 'collapsible'
   /** Whether section is initially expanded */
@@ -54,4 +78,4 @@ export interface CollapsibleSection extends BaseMenuItem {
 /**
  * Union type for all menu item types
  */
-export type MenuItem = SimpleMenuItem | DisplayMenuItem | CollapsibleSection
+export type MenuItem = SimpleMenuItem | DisplayMenuItem | ClickableDisplayMenuItem | CopyableMenuItem | CollapsibleSection

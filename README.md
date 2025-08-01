@@ -23,15 +23,19 @@ A modern React TypeScript dashboard for monitoring and managing Claude Code Hook
 - **Key Details Display** - Complete key information with inline formatting
 
 ### 📡 Real-time Notifications
-- **Live Updates** - Server-Sent Events (SSE) for real-time notification streaming
+- **Live Updates** - Server-Sent Events (SSE) for real-time notification streaming with SRP-compliant architecture
+- **Robust Connection Management** - Separate hooks for connection (`useSSEConnect`) and disconnection (`useSSEDisconnect`) following Single Responsibility Principle
+- **Automatic Reconnection** - Exponential backoff with configurable retry logic and error recovery
+- **Logout Cleanup** - Backend notification on user logout for proper connection termination
 - **Context Grouping** - Notifications organized by project context
 - **Bulk Operations** - Delete individual notifications or entire contexts
 - **Audio Notifications** 🔊 - System-integrated sound alerts with permission management
 - **Notification Persistence** - Local storage with automatic cleanup
 
 ### 🎨 User Experience
+- **Enhanced Menu System** 📱 - Accordion-style navigation with collapsible sections and real-time connection awareness
 - **Theme Switching** 🌙 - Light/dark mode with Material UI theming
-- **Connection Monitoring** 📊 - Real-time SSE connection status tracking
+- **Connection Monitoring** 📊 - Real-time SSE connection status tracking with detailed diagnostics
 - **Help System** ❓ - Contextual tooltips and interactive guidance
 - **Responsive Design** 📱 - Mobile-first approach optimized for all devices
 - **Loading States** - Comprehensive loading indicators and skeleton screens
@@ -216,10 +220,12 @@ src/
 │       └── apiKey/    # API Key Management components
 │           ├── ApiKeyGenerationModal.tsx
 │           └── steps/ # Multi-step wizard components
-├── hooks/             # Custom React hooks
+├── hooks/             # Custom React hooks (SRP-compliant architecture)  
 │   ├── useNotificationData.ts    # Notification state management
 │   ├── useSystemNotifications.ts # Browser notifications
-│   ├── useSSEConnection.ts       # Server-Sent Events
+│   ├── useSSEConnect.ts          # Server-Sent Events connection establishment
+│   ├── useSSEDisconnect.ts       # Server-Sent Events disconnection management  
+│   ├── useUserInitialization.ts  # User initialization patterns
 │   └── apiKey/        # API Key management hooks
 ├── services/          # API service layer
 │   └── apiKey/        # API Key service client
@@ -228,9 +234,12 @@ src/
 ├── contexts/          # React contexts (Theme, Help, Auth)
 ├── types/             # TypeScript type definitions
 │   ├── apiKey.ts      # API Key related types
+│   ├── connection.ts  # SSE connection type definitions
+│   ├── menu.ts        # Enhanced menu type system
 │   └── notifications.ts # Notification types
 ├── theme/             # Material UI theme configuration
 ├── utils/             # Utility functions
+│   └── env.ts         # Type-safe environment configuration
 ├── config/            # Configuration files
 ├── assets/            # Static assets
 └── tests/             # Test files with MSW mocking
@@ -238,12 +247,14 @@ src/
 
 ### Key Patterns
 
-- **Multi-Step Wizards** - Complex flows broken into manageable steps (API key generation)
+- **Single Responsibility Principle (SRP)** - Hooks focused on single concerns (connection vs disconnection)
+- **Multi-Step Wizards** - Complex flows broken into manageable steps (API key generation)  
 - **Security-First Design** - "Show once only" patterns, JWT authentication, secure token handling
 - **Real-time State Management** - Optimistic updates with startTransition for React 19 compliance
 - **Context-Based Organization** - Notifications grouped by project context with bulk operations
 - **Material UI Integration** - All components built on MUI foundation with consistent theming
 - **Service Layer Architecture** - Dedicated API clients with JWT interceptors
+- **Type-Safe Environment Handling** - Centralized configuration with TypeScript interfaces
 - **Path Aliases** - Clean imports with `@/*` mapping to `./src/*`
 - **Strict TypeScript** - Full type coverage with branded types and Result patterns
 
@@ -261,8 +272,14 @@ src/
 3. **Security Patterns** - One-time display, immediate copy functionality
 4. **State Management** - React state with startTransition for optimal performance
 
+#### SSE Connection Architecture
+1. **SRP-Compliant Design** - Separate hooks for connection establishment (`useSSEConnect`) and disconnection (`useSSEDisconnect`)
+2. **Robust Error Handling** - Type-safe error management with discriminated unions and automatic retry logic
+3. **Connection Lifecycle** - Proper connection state management with cleanup on logout and page unload
+4. **Environment Configuration** - Type-safe environment variable handling with centralized utilities
+
 #### Notification Flow
-1. **SSE Connection** - Real-time updates via Server-Sent Events
+1. **SSE Connection** - Real-time updates via Server-Sent Events with SRP-compliant architecture
 2. **Context Grouping** - Notifications organized by project context
 3. **Optimistic Updates** - Immediate UI feedback with server synchronization
 4. **Local Persistence** - Notifications stored in localStorage with cleanup
