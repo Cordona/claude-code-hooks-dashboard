@@ -6,6 +6,7 @@ interface StatusIndicatorPreviewProps {
   status:
     | 'enabled'
     | 'disabled'
+    | 'blocked'
     | 'connected'
     | 'connecting'
     | 'disconnected'
@@ -21,23 +22,33 @@ export const StatusIndicatorPreview: React.FC<StatusIndicatorPreviewProps> = Rea
   ({ type, status, label, size = 8 }) => {
     const theme = useTheme()
 
+    const getConnectionColor = (): string => {
+      if (status === 'connected') return theme.palette.success.main
+      if (status === 'connecting') return '#2196f3' // Blue for connecting
+      if (status === 'dormant') return '#9e9e9e' // Gray for dormant/authentication required
+      return theme.palette.error.main // disconnected
+    }
+
+    const getNotificationColor = (): string => {
+      if (status === 'enabled') return theme.palette.info.main
+      if (status === 'blocked') return theme.palette.error.main
+      return theme.palette.warning.main // disabled
+    }
+
+    const getAudioColor = (): string => {
+      if (status === 'ready') return theme.palette.mode === 'dark' ? '#b794f6' : '#9f7aea'
+      if (status === 'waiting') return theme.palette.warning.main
+      return theme.palette.action.disabled
+    }
+
     const getStatusColor = (): string => {
-      if (type === 'connection') {
-        if (status === 'connected') return theme.palette.success.main
-        if (status === 'connecting') return '#2196f3' // Blue for connecting
-        if (status === 'dormant') return '#9e9e9e' // Gray for dormant/authentication required
-        return theme.palette.error.main // disconnected
-      } else if (type === 'notification') {
-        return status === 'enabled' ? theme.palette.info.main : theme.palette.warning.main
-      } else if (type === 'audio') {
-        if (status === 'ready') return theme.palette.mode === 'dark' ? '#b794f6' : '#9f7aea'
-        if (status === 'waiting') return theme.palette.warning.main
-        return theme.palette.action.disabled
-      }
+      if (type === 'connection') return getConnectionColor()
+      if (type === 'notification') return getNotificationColor()
+      if (type === 'audio') return getAudioColor()
       return theme.palette.text.secondary
     }
 
-    const shouldPulse = status === 'disconnected' || status === 'disabled' || status === 'waiting' || status === 'connecting'
+    const shouldPulse = status === 'disconnected' || status === 'disabled' || status === 'blocked' || status === 'waiting' || status === 'connecting'
 
     return (
       <Box

@@ -36,7 +36,7 @@ export const Dashboard: FC = () => {
   const [isAuthMinimized, setIsAuthMinimized] = useState(false)
 
   // Initialize audio and system notifications
-  // Note: SSE connection is handled by ConnectionStatus component
+  // Note: SSE connection is established by ConnectionStatus component
   useAudioNotifications()
   useSystemNotifications()
 

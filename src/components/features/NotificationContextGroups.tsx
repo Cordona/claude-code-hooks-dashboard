@@ -76,9 +76,16 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
           setIsPurgeDialogOpen(false)
         })
       } catch (error) {
-        // Error handling - could add toast notification here
+        // Handle purge errors by logging and maintaining stable UI state
         // eslint-disable-next-line no-console
-        console.error('Failed to purge notifications:', error)
+        console.error('Failed to purge notifications:', error instanceof Error ? error.message : 'Unknown error')
+        
+        // Error handled: Log error and ensure dialog closes so user can retry
+        startTransition(() => {
+          setIsPurgeDialogOpen(false)
+        })
+
+        // For now, error is handled by logging and keeping the UI stable
       } finally {
         startTransition(() => {
           setIsPurging(false)

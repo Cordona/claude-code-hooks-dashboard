@@ -234,14 +234,20 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = React.memo(({ size = 'med
             </Typography>
             <StatusIndicatorPreview
               type="notification"
-              status="enabled"
-              label="System notifications enabled"
+              status="blocked"
+              label="System notifications blocked"
               size={10}
             />
             <StatusIndicatorPreview
               type="notification"
               status="disabled"
               label="System notifications disabled"
+              size={10}
+            />
+            <StatusIndicatorPreview
+              type="notification"
+              status="enabled"
+              label="System notifications enabled"
               size={10}
             />
           </Box>
@@ -262,8 +268,8 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = React.memo(({ size = 'med
             </Typography>
             <StatusIndicatorPreview
               type="audio"
-              status="ready"
-              label="Audio notifications ready"
+              status="not-supported"
+              label="Audio not supported"
               size={10}
             />
             <StatusIndicatorPreview
@@ -274,14 +280,8 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = React.memo(({ size = 'med
             />
             <StatusIndicatorPreview
               type="audio"
-              status="disabled"
-              label="Audio notifications disabled"
-              size={10}
-            />
-            <StatusIndicatorPreview
-              type="audio"
-              status="not-supported"
-              label="Audio not supported"
+              status="ready"
+              label="Audio notifications ready"
               size={10}
             />
           </Box>
