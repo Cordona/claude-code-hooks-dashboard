@@ -55,7 +55,7 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
     const totalProjects = notificationGroups.length
     
     // Check if user has typed the correct confirmation
-    const isConfirmationValid = confirmationText.toLowerCase() === 'delete all'
+    const isConfirmationValid = confirmationText.toLowerCase() === 'purge all'
     const hasInput = confirmationText.trim().length > 0
     const showInvalid = hasInput && !isConfirmationValid
     
@@ -145,7 +145,7 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
           }}
         >
           <Warning sx={{ color: '#f57c00', fontSize: 20 }} />
-          Delete All Notifications
+          Purge All Notifications
         </DialogTitle>
 
         <DialogContent
@@ -164,7 +164,7 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
                 mb: 2,
               }}
             >
-              You are about to permanently delete{' '}
+              You are about to permanently purge{' '}
               <Box
                 component="span"
                 sx={{
@@ -222,7 +222,7 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
                 mb: 2,
               }}
             >
-              Type <strong>Delete all</strong> to confirm:
+              Type <strong>Purge all</strong> to confirm:
             </Typography>
             
             <TextField
@@ -231,7 +231,7 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
               value={confirmationText}
               onChange={handleConfirmationChange}
               onKeyDown={handleKeyDown}
-              placeholder="Delete all"
+              placeholder="Purge all"
               disabled={isLoading}
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -295,7 +295,7 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
               },
             }}
           >
-            {isLoading ? 'Deleting...' : 'Delete All'}
+            {isLoading ? 'Purging...' : 'Purge All'}
           </Button>
         </DialogActions>
       </Dialog>

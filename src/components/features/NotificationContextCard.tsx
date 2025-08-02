@@ -153,7 +153,7 @@ export const NotificationContextCard: React.FC<NotificationContextCardProps> = R
               e.stopPropagation()
               handleDeleteAllClick()
             }}
-            aria-label={`Delete all notifications for ${group.contextName}`}
+            aria-label={`Purge all notifications for ${group.contextName}`}
             sx={{
               color: '#f44336',
               mr: 1,
@@ -206,7 +206,7 @@ export const NotificationContextCard: React.FC<NotificationContextCardProps> = R
               fontFamily: theme.typography.fontFamily,
             }}
           >
-            This will permanently delete all notifications for{' '}
+            This will permanently purge all notifications for{' '}
             <Box
               component="span"
               sx={{

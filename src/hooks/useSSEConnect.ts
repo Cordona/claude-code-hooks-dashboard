@@ -66,9 +66,9 @@ const isClaudeHookEvent = (obj: unknown): obj is ClaudeHookEvent => {
   
   // Validate optional fields if present
   const hasValidOptionalFields = (
-    (candidate.hook_type === undefined || typeof candidate.hook_type === 'string') &&
-    (candidate.user_external_id === undefined || typeof candidate.user_external_id === 'string') &&
-    (candidate.context_work_directory === undefined || typeof candidate.context_work_directory === 'string') &&
+    (candidate.hookType === undefined || typeof candidate.hookType === 'string') &&
+    (candidate.userExternalId === undefined || typeof candidate.userExternalId === 'string') &&
+    (candidate.contextWorkDirectory === undefined || typeof candidate.contextWorkDirectory === 'string') &&
     (candidate.type === undefined || typeof candidate.type === 'string') &&
     (candidate.source === undefined || typeof candidate.source === 'string') &&
     (candidate.metadata === undefined || (typeof candidate.metadata === 'object' && candidate.metadata !== null))
@@ -125,7 +125,7 @@ const handleClaudeHookEvent = (data: string): void => {
  * Connection confirmation structure from backend (using snake_case as sent by Kotlin backend)
  */
 interface BackendConnectionConfirmation {
-  readonly connection_id: string
+  readonly connectionId: string
   readonly message: string
 }
 
@@ -141,7 +141,7 @@ const isConnectionConfirmation = (obj: unknown): obj is BackendConnectionConfirm
   
   const candidate = obj as Record<string, unknown>
   return (
-    typeof candidate.connection_id === 'string' &&
+    typeof candidate.connectionId === 'string' &&
     typeof candidate.message === 'string'
   )
 }
@@ -157,7 +157,7 @@ const handleConnectionEvent = (data: string, onConnectionId: (connectionId: stri
     const connectionData: unknown = JSON.parse(data)
     
     if (isConnectionConfirmation(connectionData)) {
-      onConnectionId(connectionData.connection_id, connectionData.message)
+      onConnectionId(connectionData.connectionId, connectionData.message)
     } else {
       // eslint-disable-next-line no-console
       console.error('SSE: Invalid connection confirmation received')

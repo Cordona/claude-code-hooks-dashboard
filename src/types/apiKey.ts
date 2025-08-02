@@ -8,22 +8,22 @@
 // Backend response from API key generation
 export interface ApiKeyResponse {
   /** The actual API key - shown only once for security */
-  readonly api_key: string;
+  readonly apiKey: string;
   
   /** Unique identifier for the key */
-  readonly key_id: string;
+  readonly keyId: string;
   
   /** Key prefix for identification (e.g., "chk_qGmHAc...") */
-  readonly key_prefix: string;
+  readonly keyPrefix: string;
   
   /** When the key was created (Unix timestamp in seconds) */
-  readonly created_at: number;
+  readonly createdAt: number;
   
   /** When the key was last used (Unix timestamp in seconds, null if never used) */
-  readonly last_used_at: number | null;
+  readonly lastUsedAt: number | null;
   
   /** Whether the key is currently active */
-  readonly is_active: boolean;
+  readonly isActive: boolean;
   
   /** Human-readable name for the key */
   readonly name: string;
@@ -32,16 +32,16 @@ export interface ApiKeyResponse {
   readonly permissions: readonly string[];
   
   /** When the key expires (Unix timestamp in seconds, null if no expiration) */
-  readonly expires_at: number | null;
+  readonly expiresAt: number | null;
 }
 
 // Error response structure for 404 and other API errors
 export interface ApiKeyErrorResponse {
   /** HTTP status code */
-  readonly status_code: number;
+  readonly statusCode: number;
   
   /** Exception class name */
-  readonly exception_name: string;
+  readonly exceptionName: string;
   
   /** Human-readable error message */
   readonly message: string;
@@ -78,7 +78,7 @@ export type ApiKeyResult<T> =
 
 
 // Utility type for partial API key updates
-export type ApiKeyUpdate = Partial<Pick<ApiKeyResponse, 'name' | 'is_active' | 'expires_at'>>;
+export type ApiKeyUpdate = Partial<Pick<ApiKeyResponse, 'name' | 'isActive' | 'expiresAt'>>;
 
 // API Key Error class for proper error throwing
 export class ApiKeyOperationError extends Error {

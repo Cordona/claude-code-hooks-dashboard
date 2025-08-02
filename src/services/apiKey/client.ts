@@ -170,7 +170,7 @@ class ApiKeyClient {
    */
   async updateApiKey(
     keyId: string, 
-    updates: Partial<Pick<ApiKeyResponse, 'name' | 'is_active'>>
+    updates: Partial<Pick<ApiKeyResponse, 'name' | 'isActive'>>
   ): Promise<ApiKeyResult<ApiKeyResponse>> {
     try {
       const basePath = import.meta.env.VITE_API_KEY_MANAGE_PATH ?? '/api/v1/claude-code/user/api-key';
@@ -226,8 +226,8 @@ class ApiKeyClient {
     return (
       typeof value === 'object' &&
       value !== null &&
-      'status_code' in value &&
-      'exception_name' in value &&
+      'statusCode' in value &&
+      'exceptionName' in value &&
       'message' in value &&
       'timestamp' in value
     );

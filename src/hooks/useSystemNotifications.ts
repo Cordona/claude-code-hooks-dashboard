@@ -190,7 +190,7 @@ export const useSystemNotifications = (): UseSystemNotificationsReturn => {
     async (event: ClaudeHookEvent): Promise<void> => {
       if (!isSupported || state.permission !== 'granted') return
 
-      const formattedPath = formatProjectContext(event.context_work_directory)
+      const formattedPath = formatProjectContext(event.contextWorkDirectory)
 
       // Format message with clear labels like requested
       let body = `Message: ${event.reason}`

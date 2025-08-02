@@ -40,14 +40,14 @@ export const ApiKeyDisplayStep: React.FC<ApiKeyDisplayStepProps> = ({
 
   const handleCopyKey = async () => {
     try {
-      await navigator.clipboard.writeText(generatedKey.api_key);
+      await navigator.clipboard.writeText(generatedKey.apiKey);
       setCopied(true);
       setTimeout(() => setCopied(false), 1000);
     } catch {
       // Fallback: Create a temporary text area for manual selection
       try {
         const textField = document.createElement('textarea');
-        textField.value = generatedKey.api_key;
+        textField.value = generatedKey.apiKey;
         textField.style.position = 'fixed';
         textField.style.left = '-999999px';
         textField.style.top = '-999999px';
@@ -57,7 +57,7 @@ export const ApiKeyDisplayStep: React.FC<ApiKeyDisplayStepProps> = ({
         // Select the text for manual copying
         textField.focus();
         textField.select();
-        textField.setSelectionRange(0, generatedKey.api_key.length);
+        textField.setSelectionRange(0, generatedKey.apiKey.length);
         
         // Clean up
         setTimeout(() => {
@@ -185,7 +185,7 @@ export const ApiKeyDisplayStep: React.FC<ApiKeyDisplayStepProps> = ({
                   pr: 6, // Prevent text from overlapping with copy button
                 }}
               >
-                {generatedKey.api_key}
+                {generatedKey.apiKey}
               </Typography>
             </Box>
 
@@ -262,7 +262,7 @@ export const ApiKeyDisplayStep: React.FC<ApiKeyDisplayStepProps> = ({
             
             <ListItem sx={{ px: 0 }}>
               <Typography variant="body1">
-                <strong>Expiration:</strong> {formatDate(generatedKey.expires_at)}
+                <strong>Expiration:</strong> {formatDate(generatedKey.expiresAt)}
               </Typography>
             </ListItem>
           </List>

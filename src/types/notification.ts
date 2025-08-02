@@ -9,16 +9,16 @@
 export interface ClaudeHookEvent {
   /** Unique identifier for the notification */
   id: string
-  /** Hook type from backend (received as snake_case hook_type) - optional for backward compatibility */
-  hook_type?: string
+  /** Hook type from backend (now received as camelCase hookType) - optional for backward compatibility */
+  hookType?: string
   /** Main notification message/reason */
   reason: string
   /** ISO timestamp when event occurred */
   timestamp: string
   /** Optional project context path */
-  context_work_directory?: string
+  contextWorkDirectory?: string
   /** User external ID - optional for backward compatibility */
-  user_external_id?: string
+  userExternalId?: string
   /** Event type (e.g., 'plan_ready', 'tool_use', etc.) */
   type?: string
   /** Additional event metadata */
