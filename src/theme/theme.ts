@@ -92,7 +92,7 @@ const baseThemeOptions: ThemeOptions = {
   },
 }
 
-// Light theme
+// Light theme - High contrast and readable
 export const lightTheme = createTheme({
   ...baseThemeOptions,
   palette: {
@@ -104,17 +104,19 @@ export const lightTheme = createTheme({
       contrastText: '#ffffff',
     },
     background: {
-      default: '#d0d0d0',
-      paper: '#d6d6d6',
+      default: '#f8f9fa',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#785f46',
-      secondary: '#8d6b44',
+      primary: '#1a1a1a',
+      secondary: '#4a5568',
     },
-    divider: 'rgba(0, 0, 0, 0.12)',
+    divider: 'rgba(0, 0, 0, 0.16)',
     action: {
-      hover: 'rgba(0, 0, 0, 0.08)',
-      selected: 'rgba(0, 0, 0, 0.16)',
+      hover: 'rgba(0, 0, 0, 0.04)',
+      selected: 'rgba(0, 0, 0, 0.08)',
+      disabled: 'rgba(0, 0, 0, 0.26)',
+      disabledBackground: 'rgba(0, 0, 0, 0.12)',
     },
     ...statusColors,
   },
@@ -124,9 +126,17 @@ export const lightTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-          backgroundColor: '#d6d6d6',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          backgroundColor: '#ffffff',
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          backgroundImage: 'none',
         },
       },
     },
@@ -138,10 +148,36 @@ export const lightTheme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#ffffff',
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: '#ffffff',
+            '& fieldset': {
+              borderColor: 'rgba(0, 0, 0, 0.23)',
+            },
+            '&:hover fieldset': {
+              borderColor: 'rgba(0, 0, 0, 0.4)',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#2563eb',
+            },
+          },
+        },
+      },
+    },
   },
 })
 
-// Dark theme
+// Dark theme - Claude Code inspired
 export const darkTheme = createTheme({
   ...baseThemeOptions,
   palette: {
@@ -153,17 +189,19 @@ export const darkTheme = createTheme({
       contrastText: '#ffffff',
     },
     background: {
-      default: '#0a0a0a',
-      paper: '#111111',
+      default: '#1a1a1a',
+      paper: '#2d2d2d',
     },
     text: {
       primary: '#fafafa',
-      secondary: '#a3a3a3',
+      secondary: '#9ca3af',
     },
-    divider: 'rgba(255, 255, 255, 0.06)',
+    divider: 'rgba(255, 255, 255, 0.08)',
     action: {
-      hover: 'rgba(255, 255, 255, 0.04)',
-      selected: 'rgba(255, 255, 255, 0.08)',
+      hover: 'rgba(255, 255, 255, 0.06)',
+      selected: 'rgba(255, 255, 255, 0.12)',
+      disabled: 'rgba(255, 255, 255, 0.26)',
+      disabledBackground: 'rgba(255, 255, 255, 0.12)',
     },
     ...statusColors,
   },
@@ -173,17 +211,50 @@ export const darkTheme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
-          backgroundColor: '#111111',
-          border: '1px solid rgba(255, 255, 255, 0.04)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+          backgroundColor: '#2d2d2d',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#2d2d2d',
+          backgroundImage: 'none',
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           padding: '12px 16px',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#2d2d2d',
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+              borderColor: 'rgba(255, 255, 255, 0.12)',
+            },
+            '&:hover fieldset': {
+              borderColor: 'rgba(255, 255, 255, 0.16)',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#3b82f6',
+            },
+          },
         },
       },
     },

@@ -188,7 +188,7 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
         {/* Purge Confirmation Dialog */}
         <PurgeConfirmationDialog
           open={isPurgeDialogOpen}
-          notificationCount={notifications.length}
+          notificationGroups={notificationGroups}
           isLoading={isPurging}
           onConfirm={handlePurgeConfirm}
           onCancel={handlePurgeCancel}

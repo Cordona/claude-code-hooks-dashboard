@@ -57,11 +57,24 @@ const isClaudeHookEvent = (obj: unknown): obj is ClaudeHookEvent => {
   }
   
   const candidate = obj as Record<string, unknown>
-  return (
+  // Validate required fields (id, reason, timestamp)
+  const hasRequiredFields = (
     typeof candidate.id === 'string' &&
     typeof candidate.reason === 'string' &&
     typeof candidate.timestamp === 'string'
   )
+  
+  // Validate optional fields if present
+  const hasValidOptionalFields = (
+    (candidate.hook_type === undefined || typeof candidate.hook_type === 'string') &&
+    (candidate.user_external_id === undefined || typeof candidate.user_external_id === 'string') &&
+    (candidate.context_work_directory === undefined || typeof candidate.context_work_directory === 'string') &&
+    (candidate.type === undefined || typeof candidate.type === 'string') &&
+    (candidate.source === undefined || typeof candidate.source === 'string') &&
+    (candidate.metadata === undefined || (typeof candidate.metadata === 'object' && candidate.metadata !== null))
+  )
+  
+  return hasRequiredFields && hasValidOptionalFields
 }
 
 /**

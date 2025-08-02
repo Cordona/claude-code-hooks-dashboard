@@ -14,7 +14,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
       isAuthenticated,
       accessToken: user?.access_token,
     })
-    const { isConnected, isConnecting, connectionId, error } = useSSEConnect({
+    const { isConnected, isConnecting, error } = useSSEConnect({
       isAuthenticated,
       userInitialized,
       accessToken: user?.access_token,
@@ -53,8 +53,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
       if (initializationError) return `Initialization failed: ${initializationError.message}`
       if (isConnecting) return 'Connecting to service...'
       if (isConnected) {
-        const connectionIdSuffix = connectionId ? ` (ID: ${connectionId.slice(-8)})` : ''
-        return `Connected to service${connectionIdSuffix}`
+        return 'Connected to service'
       }
       if (error) return `Connection error: ${error.message}`
       return 'Disconnected from service'

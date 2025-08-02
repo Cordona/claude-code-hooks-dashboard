@@ -27,11 +27,13 @@ import {
   Check,
   BuildCircle,
   PriorityHigh,
+  NetworkCheck,
 } from '@mui/icons-material'
 import { useNotifications, useAudioNotifications, useUptime, useAuthStatus } from '@/hooks'
 import type { MenuItem as MenuItemType, SimpleMenuItem, DisplayMenuItem, ClickableDisplayMenuItem, CopyableMenuItem } from '@/types'
 import { ApiKeyGenerationModal } from '@/components/features/apiKey/ApiKeyGenerationModal'
 import { DashboardBlurOverlay } from '@/components/features/auth/DashboardBlurOverlay'
+import { env } from '@/utils/env'
 
 // Type alias for a cleaner subitem union type
 type SubMenuItem = SimpleMenuItem | DisplayMenuItem | ClickableDisplayMenuItem | CopyableMenuItem
@@ -264,12 +266,13 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
         icon: <BugReport sx={{ fontSize: 18, color: 'text.secondary' }} />,
         items: [
           {
-            id: 'uptime',
-            type: 'display',
-            label: 'Uptime',
-            value: isTracking ? formattedUptime : 'Not connected',
+            id: 'connected-to',
+            type: 'copyable',
+            label: 'Connected to',
+            value: isConnected ? env.BACKEND_BASE_URL : 'Not connected',
+            ...(isConnected && { copyValue: env.BACKEND_BASE_URL }),
             icon: (
-              <AccessTime sx={{ fontSize: 18, color: isTracking ? '#2d7a32' : 'text.disabled' }} />
+              <NetworkCheck sx={{ fontSize: 18, color: isConnected ? '#2d7a32' : 'text.disabled' }} />
             ),
           },
           {
@@ -290,6 +293,15 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
             ...(user?.profile?.sub && { copyValue: user.profile.sub }),
             icon: (
               <AccountBox sx={{ fontSize: 18, color: (user?.profile?.sub && isConnected) ? '#2d7a32' : 'text.disabled' }} />
+            ),
+          },
+          {
+            id: 'uptime',
+            type: 'display',
+            label: 'Uptime',
+            value: isTracking ? formattedUptime : 'Not connected',
+            icon: (
+              <AccessTime sx={{ fontSize: 18, color: isTracking ? '#2d7a32' : 'text.disabled' }} />
             ),
           },
         ],

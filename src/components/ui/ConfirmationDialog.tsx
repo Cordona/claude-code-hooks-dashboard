@@ -81,7 +81,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = React.memo(
         <DialogTitle
           id="confirmation-dialog-title"
           sx={{
-            pb: 1,
+            pb: 2,
+            pt: 1,
             fontWeight: 500,
             fontSize: '1.125rem',
             color: 'text.primary',
@@ -93,8 +94,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = React.memo(
 
         <DialogContent
           sx={{
-            pb: 2,
-            pt: 0.5,
+            pb: 3,
+            pt: 1,
           }}
         >
           {children || (
@@ -116,7 +117,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = React.memo(
           sx={{
             px: 3,
             pb: 3,
-            pt: 1,
+            pt: 2,
             gap: 1.5,
             justifyContent: 'flex-end',
           }}

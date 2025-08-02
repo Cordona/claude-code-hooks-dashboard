@@ -77,6 +77,10 @@ export const useNotificationData = () => {
         displayTime: formatTime(event.timestamp),
         displayDate: formatDate(event.timestamp),
         ...(event.context_work_directory && { projectContext: event.context_work_directory }),
+        ...(event.hook_type && { hookType: event.hook_type }),
+        ...(event.type && { eventType: event.type }),
+        ...(event.metadata && { metadata: event.metadata }),
+        ...(event.source && { source: event.source }),
       }
 
       setNotifications((prev) => {

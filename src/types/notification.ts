@@ -9,12 +9,22 @@
 export interface ClaudeHookEvent {
   /** Unique identifier for the notification */
   id: string
+  /** Hook type from backend (received as snake_case hook_type) - optional for backward compatibility */
+  hook_type?: string
   /** Main notification message/reason */
   reason: string
   /** ISO timestamp when event occurred */
   timestamp: string
   /** Optional project context path */
   context_work_directory?: string
+  /** User external ID - optional for backward compatibility */
+  user_external_id?: string
+  /** Event type (e.g., 'plan_ready', 'tool_use', etc.) */
+  type?: string
+  /** Additional event metadata */
+  metadata?: Record<string, unknown>
+  /** Event source or origin */
+  source?: string
 }
 
 /**
@@ -36,6 +46,14 @@ export interface NotificationData {
   displayTime: string
   /** Formatted date for display (DD/MM/YYYY) */
   displayDate: string
+  /** Hook type from backend for primary event classification */
+  hookType?: string
+  /** Event type for additional context */
+  eventType?: string
+  /** Additional event metadata for debugging */
+  metadata?: Record<string, unknown>
+  /** Event source or origin */
+  source?: string
 }
 
 /**
