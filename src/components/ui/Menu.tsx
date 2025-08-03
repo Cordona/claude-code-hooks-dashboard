@@ -871,6 +871,8 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
             borderColor: 'divider',
             boxShadow: (theme) => theme.shadows[8],
             backgroundImage: 'none',
+            // Add proper spacing from the right edge to avoid crowding the user profile
+            marginRight: '8px',
           },
         }}
         slotProps={{

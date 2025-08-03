@@ -1,48 +1,42 @@
 import React, { useMemo, useCallback } from 'react'
-import { Box, Tooltip, useTheme } from '@mui/material'
+import { Box, Typography, useTheme } from '@mui/material'
 import { useAudioNotifications } from '@/hooks'
 
 interface AudioStatusProps {
   size?: 'small' | 'medium' | 'large'
+  showLabel?: boolean
 }
 
-export const AudioStatus: React.FC<AudioStatusProps> = React.memo(({ size = 'small' }) => {
+export const AudioStatus: React.FC<AudioStatusProps> = React.memo(({ size = 'small', showLabel = true }) => {
   const { isEnabled, isSupported, isInitialized } = useAudioNotifications()
 
   const dotSize = useMemo(() => {
     switch (size) {
       case 'small':
-        return 8
+        return 6
       case 'medium':
-        return 12
+        return 6
       case 'large':
-        return 16
-      default:
         return 8
+      default:
+        return 6
     }
   }, [size])
 
   const theme = useTheme()
 
   const getStatusColor = useCallback((): string => {
-    // Audio Ready - Light Purple (distinguishable from red)
+    // Refined, subtle colors inspired by the reference design
     if (isSupported && isEnabled && isInitialized) {
-      return theme.palette.mode === 'dark' ? '#b794f6' : '#9f7aea'
+      return theme.palette.mode === 'dark' ? '#a78bfa' : '#8b5cf6' // Subtle purple for ready
     }
-    // Audio Waiting - Amber
     if (isSupported && isEnabled && !isInitialized) {
-      return theme.palette.warning.main
+      return theme.palette.mode === 'dark' ? '#fbbf24' : '#f59e0b' // Subtle amber for waiting
     }
-    // Audio Disabled or Not Supported - Gray
-    return theme.palette.action.disabled
+    // Audio Disabled or Not Supported - Subtle Gray
+    return theme.palette.mode === 'dark' ? '#6b7280' : '#9ca3af'
   }, [isSupported, isEnabled, isInitialized, theme])
 
-  const getStatusText = useCallback((): string => {
-    if (!isSupported) return 'Audio not supported by browser'
-    if (!isEnabled) return 'Audio notifications disabled'
-    if (!isInitialized) return 'Audio ready (click anywhere to activate)'
-    return 'Audio notifications ready'
-  }, [isSupported, isEnabled, isInitialized])
 
   const getAriaLabel = useCallback((): string => {
     if (!isSupported) return 'Audio not supported'
@@ -51,43 +45,78 @@ export const AudioStatus: React.FC<AudioStatusProps> = React.memo(({ size = 'sma
     return 'Audio ready'
   }, [isSupported, isEnabled, isInitialized])
 
+  const getStatusLabel = useCallback((): string => {
+    // Sentence case labels for better readability
+    if (!isSupported) return 'Sound not supported'
+    if (!isEnabled) return 'Sound off'
+    if (!isInitialized) return 'Sound waiting'
+    return 'Sound on'
+  }, [isSupported, isEnabled, isInitialized])
+
   const shouldPulse = useCallback((): boolean => {
     // Pulse when waiting for user interaction
     return isSupported && isEnabled && !isInitialized
   }, [isSupported, isEnabled, isInitialized])
 
+  const pulseActive = shouldPulse()
+
   return (
-    <Tooltip title={getStatusText()} arrow placement="bottom">
-      <Box
-        component="output"
-        aria-live="polite"
-        aria-label={getAriaLabel()}
-        sx={{
-          width: dotSize,
-          height: dotSize,
-          borderRadius: '50%',
-          backgroundColor: getStatusColor(),
-          opacity: shouldPulse() ? 0.8 : 1,
-          transition: 'all 0.3s ease-in-out',
-          cursor: 'default',
-          animation: shouldPulse() ? 'pulse 1.5s infinite' : 'none',
-          '@keyframes pulse': {
-            '0%': {
-              opacity: 0.8,
-              transform: 'scale(1)',
+    <Box
+      component="output"
+      aria-live="polite"
+      aria-label={getAriaLabel()}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: theme.spacing(1),
+        py: theme.spacing(0.25),
+        cursor: 'default',
+      }}
+    >
+        <Box
+          sx={{
+            width: dotSize,
+            height: dotSize,
+            borderRadius: '50%',
+            backgroundColor: getStatusColor(),
+            opacity: pulseActive ? 0.7 : 0.9,
+            transition: 'all 0.2s ease-in-out',
+            animation: pulseActive ? 'pulse 2s infinite' : 'none',
+            boxShadow: `0 0 0 1px ${getStatusColor()}20`,
+            '@keyframes pulse': {
+              '0%': {
+                opacity: 0.7,
+                transform: 'scale(1)',
+                boxShadow: `0 0 0 1px ${getStatusColor()}20`,
+              },
+              '50%': {
+                opacity: 1,
+                transform: 'scale(1.2)',
+                boxShadow: `0 0 0 2px ${getStatusColor()}30`,
+              },
+              '100%': {
+                opacity: 0.7,
+                transform: 'scale(1)',
+                boxShadow: `0 0 0 1px ${getStatusColor()}20`,
+              },
             },
-            '50%': {
-              opacity: 1,
-              transform: 'scale(1.1)',
-            },
-            '100%': {
-              opacity: 0.8,
-              transform: 'scale(1)',
-            },
-          },
-        }}
-      />
-    </Tooltip>
+          }}
+        />
+        {showLabel && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: theme.palette.mode === 'dark' ? theme.palette.grey[400] : theme.palette.grey[600],
+              fontSize: '0.8125rem',
+              fontWeight: 400,
+              userSelect: 'none',
+              letterSpacing: '0.01em',
+            }}
+          >
+            {getStatusLabel()}
+          </Typography>
+        )}
+    </Box>
   )
 })
 

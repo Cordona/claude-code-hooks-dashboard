@@ -13,7 +13,6 @@ import {
   Menu,
   NotificationStatus,
   ThemeSwitcher,
-  HelpTooltip,
   NotificationContextGroups,
   ErrorBoundary,
 } from '@/components'
@@ -84,11 +83,13 @@ export const Dashboard: FC = () => {
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <ThemeSwitcher />
           </Box>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <ConnectionStatus size="medium" />
-            <NotificationStatus size="medium" />
-            <AudioStatus size="medium" />
-            <HelpTooltip size="medium" />
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* Status Indicators Group */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mr: 3 }}>
+              <ConnectionStatus size="medium" />
+              <NotificationStatus size="medium" />
+              <AudioStatus size="medium" />
+            </Box>
             
             {/* User Profile or Auth Button */}
             {isAuthenticated && user ? (
@@ -132,7 +133,9 @@ export const Dashboard: FC = () => {
             </Slide>
               </>
             )}
-            <Menu size="medium" />
+            <Box sx={{ ml: 2 }}>
+              <Menu size="medium" />
+            </Box>
           </Box>
         </Box>
 

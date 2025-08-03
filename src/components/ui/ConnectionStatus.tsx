@@ -1,20 +1,22 @@
 import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
-import { Box, Tooltip } from '@mui/material'
+import { Box, Typography, useTheme } from '@mui/material'
 import { useSSEConnect, useAuthStatus, useUserInitialization } from '@/hooks'
 
 interface ConnectionStatusProps {
   size?: 'small' | 'medium' | 'large'
+  showLabel?: boolean
 }
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
-  ({ size = 'small' }) => {
+  ({ size = 'small', showLabel = true }) => {
+    const theme = useTheme()
     const { isAuthenticated, user } = useAuthStatus()
     const { userInitialized, initializingUser, initializationError } = useUserInitialization({
       isAuthenticated,
       accessToken: user?.access_token,
     })
-    const { isConnected, isConnecting, error } = useSSEConnect({
+    const { isConnected, isConnecting } = useSSEConnect({
       isAuthenticated,
       userInitialized,
       accessToken: user?.access_token,
@@ -24,40 +26,37 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
     const dotSize = useMemo(() => {
       switch (size) {
         case 'small':
-          return 8
+          return 6
         case 'medium':
-          return 12
+          return 6
         case 'large':
-          return 16
-        default:
           return 8
+        default:
+          return 6
       }
     }, [size])
 
     const getStatusColor = (): string => {
-      // If not authenticated, show neutral state
-      if (!isAuthenticated) return '#9e9e9e' // Gray for dormant
+      const isDark = theme.palette.mode === 'dark'
       
-      if (initializingUser) return '#ff9800' // Orange for initialization
-      if (initializationError) return '#f44336' // Red for initialization error
-      if (isConnecting) return '#2196f3' // Blue for connecting
-      if (isConnected) return '#4caf50' // Green for connected
-      return '#f44336' // Red for disconnected
+      // Status color mapping to reduce cognitive complexity
+      const statusColors = {
+        dormant: isDark ? '#6b7280' : '#9ca3af',
+        initializing: isDark ? '#fbbf24' : '#f59e0b', 
+        error: isDark ? '#f87171' : '#ef4444',
+        connecting: isDark ? '#60a5fa' : '#3b82f6',
+        connected: isDark ? '#4ade80' : '#10b981',
+        disconnected: isDark ? '#f87171' : '#ef4444'
+      }
+      
+      if (!isAuthenticated) return statusColors.dormant
+      if (initializingUser) return statusColors.initializing
+      if (initializationError) return statusColors.error
+      if (isConnecting) return statusColors.connecting
+      if (isConnected) return statusColors.connected
+      return statusColors.disconnected
     }
 
-    const getStatusText = (): string => {
-      // If not authenticated, show dormant state
-      if (!isAuthenticated) return 'Authentication required'
-      
-      if (initializingUser) return 'Initializing your account...'
-      if (initializationError) return `Initialization failed: ${initializationError.message}`
-      if (isConnecting) return 'Connecting to service...'
-      if (isConnected) {
-        return 'Connected to service'
-      }
-      if (error) return `Connection error: ${error.message}`
-      return 'Disconnected from service'
-    }
 
     const getAriaLabel = (): string => {
       // If not authenticated, show dormant state
@@ -70,39 +69,75 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
       return 'Service disconnected'
     }
 
+    const getStatusLabel = (): string => {
+      // Sentence case labels for better readability
+      if (!isAuthenticated) return 'Service dormant'
+      
+      if (initializingUser) return 'Service initializing'
+      if (initializationError) return 'Connection failed'
+      if (isConnecting) return 'Service connecting'
+      if (isConnected) return 'Connected to service'
+      return 'Service disconnected'
+    }
+
+    const shouldPulse = isAuthenticated && (isConnecting || initializingUser)
+
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Tooltip title={getStatusText()} arrow placement="bottom">
+      <Box
+        component="output"
+        aria-live="polite"
+        aria-label={getAriaLabel()}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: theme.spacing(1),
+          py: theme.spacing(0.25),
+          cursor: 'default',
+        }}
+      >
           <Box
-            component="output"
-            aria-live="polite"
-            aria-label={getAriaLabel()}
             sx={{
               width: dotSize,
               height: dotSize,
               borderRadius: '50%',
               backgroundColor: getStatusColor(),
-              opacity: (isAuthenticated && (isConnecting || initializingUser)) ? 0.6 : 1,
-              transition: 'all 0.3s ease-in-out',
-              cursor: 'default',
-              animation: (isAuthenticated && (isConnecting || initializingUser)) ? 'pulse 1.5s infinite' : 'none',
+              opacity: shouldPulse ? 0.7 : 0.9,
+              transition: 'all 0.2s ease-in-out',
+              animation: shouldPulse ? 'pulse 2s infinite' : 'none',
+              boxShadow: `0 0 0 1px ${getStatusColor()}20`,
               '@keyframes pulse': {
                 '0%': {
-                  opacity: 0.6,
+                  opacity: 0.7,
                   transform: 'scale(1)',
+                  boxShadow: `0 0 0 1px ${getStatusColor()}20`,
                 },
                 '50%': {
                   opacity: 1,
-                  transform: 'scale(1.1)',
+                  transform: 'scale(1.2)',
+                  boxShadow: `0 0 0 2px ${getStatusColor()}30`,
                 },
                 '100%': {
-                  opacity: 0.6,
+                  opacity: 0.7,
                   transform: 'scale(1)',
+                  boxShadow: `0 0 0 1px ${getStatusColor()}20`,
                 },
               },
             }}
           />
-        </Tooltip>
+          {showLabel && (
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.mode === 'dark' ? theme.palette.grey[400] : theme.palette.grey[600],
+                fontSize: '0.8125rem',
+                fontWeight: 400,
+                userSelect: 'none',
+                letterSpacing: '0.01em',
+              }}
+            >
+              {getStatusLabel()}
+            </Typography>
+          )}
       </Box>
     )
   },
@@ -112,4 +147,5 @@ ConnectionStatus.displayName = 'ConnectionStatus'
 
 ConnectionStatus.propTypes = {
   size: PropTypes.oneOf(['small', 'medium', 'large']),
+  showLabel: PropTypes.bool,
 }
