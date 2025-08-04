@@ -869,7 +869,7 @@ export const Menu: React.FC<MenuProps> = React.memo(({ size = 'medium' }) => {
             backgroundColor: 'background.paper',
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: (theme) => theme.shadows[8],
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
             backgroundImage: 'none',
             // Add proper spacing from the right edge to avoid crowding the user profile
             marginRight: '8px',

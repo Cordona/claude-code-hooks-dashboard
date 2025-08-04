@@ -177,7 +177,7 @@ export const UserProfile: FC<UserProfileProps> = ({ user }) => {
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
           }
         }}
       >
