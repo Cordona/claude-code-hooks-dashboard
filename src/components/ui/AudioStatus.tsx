@@ -5,12 +5,15 @@ import { useAudioNotifications } from '@/hooks'
 interface AudioStatusProps {
   size?: 'small' | 'medium' | 'large'
   showLabel?: boolean
+  dotSize?: number
 }
 
-export const AudioStatus: React.FC<AudioStatusProps> = React.memo(({ size = 'small', showLabel = true }) => {
+export const AudioStatus: React.FC<AudioStatusProps> = React.memo(({ size = 'small', showLabel = true, dotSize: customDotSize }) => {
   const { isEnabled, isSupported, isInitialized } = useAudioNotifications()
 
   const dotSize = useMemo(() => {
+    if (customDotSize) return customDotSize
+    
     switch (size) {
       case 'small':
         return 6
@@ -21,7 +24,7 @@ export const AudioStatus: React.FC<AudioStatusProps> = React.memo(({ size = 'sma
       default:
         return 6
     }
-  }, [size])
+  }, [size, customDotSize])
 
   const theme = useTheme()
 

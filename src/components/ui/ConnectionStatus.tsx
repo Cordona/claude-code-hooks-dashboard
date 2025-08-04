@@ -6,10 +6,11 @@ import { useSSEConnect, useAuthStatus, useUserInitialization } from '@/hooks'
 interface ConnectionStatusProps {
   size?: 'small' | 'medium' | 'large'
   showLabel?: boolean
+  dotSize?: number
 }
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
-  ({ size = 'small', showLabel = true }) => {
+  ({ size = 'small', showLabel = true, dotSize: customDotSize }) => {
     const theme = useTheme()
     const { isAuthenticated, user } = useAuthStatus()
     const { userInitialized, initializingUser, initializationError } = useUserInitialization({
@@ -21,9 +22,10 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
       userInitialized,
       accessToken: user?.access_token,
     })
-    
 
     const dotSize = useMemo(() => {
+      if (customDotSize) return customDotSize
+      
       switch (size) {
         case 'small':
           return 6
@@ -34,7 +36,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = React.memo(
         default:
           return 6
       }
-    }, [size])
+    }, [size, customDotSize])
 
     const getStatusColor = (): string => {
       const isDark = theme.palette.mode === 'dark'

@@ -8,13 +8,11 @@ import {
   useAuthStatus,
 } from '@/hooks'
 import {
-  ConnectionStatus,
-  AudioStatus,
   Menu,
-  NotificationStatus,
   ThemeSwitcher,
   NotificationContextGroups,
   ErrorBoundary,
+  StatusIndicators,
 } from '@/components'
 import { 
   UserProfile, 
@@ -85,10 +83,8 @@ export const Dashboard: FC = () => {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {/* Status Indicators Group */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mr: 3 }}>
-              <ConnectionStatus size="medium" />
-              <NotificationStatus size="medium" />
-              <AudioStatus size="medium" />
+            <Box sx={{ mr: 3 }}>
+              <StatusIndicators size="medium" />
             </Box>
             
             {/* User Profile or Auth Button */}

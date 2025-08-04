@@ -5,14 +5,17 @@ import { useSystemNotifications } from '@/hooks'
 interface NotificationStatusProps {
   size?: 'small' | 'medium' | 'large'
   showLabel?: boolean
+  dotSize?: number
 }
 
 export const NotificationStatus: React.FC<NotificationStatusProps> = React.memo(
-  ({ size = 'small', showLabel = true }) => {
+  ({ size = 'small', showLabel = true, dotSize: customDotSize }) => {
     const { state } = useSystemNotifications()
     const { isSupported, isEnabled, isRequesting, permission } = state
 
     const dotSize = useMemo(() => {
+      if (customDotSize) return customDotSize
+      
       switch (size) {
         case 'small':
           return 6
@@ -23,7 +26,7 @@ export const NotificationStatus: React.FC<NotificationStatusProps> = React.memo(
         default:
           return 6
       }
-    }, [size])
+    }, [size, customDotSize])
 
     const theme = useTheme()
 
@@ -52,8 +55,6 @@ export const NotificationStatus: React.FC<NotificationStatusProps> = React.memo(
       if (permission === 'denied') return 'Notifications blocked'
       return 'Notifications off'
     }, [isSupported, isRequesting, isEnabled, permission])
-
-    // Remove all click functionality - status indicator is now display-only
 
     const shouldPulse = !isEnabled && isSupported && permission !== 'denied'
 
