@@ -1,7 +1,7 @@
-import { useCallback, useState, useRef, useEffect } from 'react'
-import type { SSEDisconnectError } from '@/types'
-import { createSSEDisconnectError } from '@/types'
-import { getSSEDisconnectEndpoint } from '@/utils'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import type {SSEDisconnectError} from '@/types'
+import {createSSEDisconnectError} from '@/types'
+import {getSSEDisconnectEndpoint} from '@/utils'
 
 interface SSEDisconnectState {
     readonly isDisconnecting: boolean
@@ -36,14 +36,14 @@ const DISCONNECT_RETRY_DELAY = 1000
 
 /**
  * Hook for managing SSE connection disconnection
- * 
+ *
  * Handles the DELETE request to disconnect specific SSE connections from the backend.
  * Provides proper error handling, retry logic, and type-safe disconnection management
  * following SRP principles - exclusively responsible for disconnection operations.
- * 
+ *
  * @param options - Configuration options for disconnection
  * @param options.accessToken - JWT access token for API authentication
- * 
+ *
  * @returns Disconnection state and control functions
  * @returns isDisconnecting - Whether disconnection is currently in progress
  * @returns disconnectAttempts - Number of disconnect attempts made for current operation
@@ -52,13 +52,13 @@ const DISCONNECT_RETRY_DELAY = 1000
  * @returns disconnect - Function to disconnect a specific connection ID
  * @returns disconnectWithRetry - Function to disconnect with automatic retry logic
  * @returns clearError - Function to clear current error state
- * 
+ *
  * @example
  * ```typescript
  * const { disconnect, isDisconnecting, error } = useSSEDisconnect({
  *   accessToken: 'jwt-token-here'
  * })
- * 
+ *
  * const handleDisconnect = async () => {
  *   try {
  *     const result = await disconnect(connectionId)
@@ -94,7 +94,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
         const timeoutId = setTimeout(() => {
             // Remove from active timeouts set
             activeTimeoutsRef.current.delete(timeoutId)
-            
+
             // Check if we're still in a state where retry is appropriate
             if (disconnectRef.current && !state.isDisconnecting) {
                 disconnectRef.current(connectionId).catch(() => {
@@ -102,7 +102,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
                 })
             }
         }, delay)
-        
+
         // Track timeout for cleanup
         activeTimeoutsRef.current.add(timeoutId)
     }, [state.isDisconnecting])
@@ -147,8 +147,8 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
      * @returns True if the error should trigger a retry
      */
     const isRetryableError = (error: SSEDisconnectError): boolean => {
-        return error.type === 'NETWORK_ERROR' || 
-               (error.type === 'HTTP_ERROR' && error.status >= 500)
+        return error.type === 'NETWORK_ERROR' ||
+            (error.type === 'HTTP_ERROR' && error.status >= 500)
     }
 
     /**
@@ -188,7 +188,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
 
         try {
             const disconnectUrl = getSSEDisconnectEndpoint(connectionId)
-            
+
             const response = await fetch(disconnectUrl, {
                 method: 'DELETE',
                 headers: {
@@ -207,8 +207,8 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
                     error: null,
                     lastDisconnectedConnectionId: connectionId,
                 }))
-                
-                
+
+
                 return {
                     success: true,
                     connectionId,
@@ -223,8 +223,8 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
                     error: null,
                     lastDisconnectedConnectionId: connectionId,
                 }))
-                
-                
+
+
                 return {
                     success: true,
                     connectionId,
@@ -305,7 +305,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
      * @returns Promise resolving to disconnect a result
      */
     const disconnectWithRetry = useCallback(async (
-        connectionId: string, 
+        connectionId: string,
         maxRetries: number = MAX_DISCONNECT_ATTEMPTS
     ): Promise<DisconnectResult> => {
         let lastError: SSEDisconnectError | null = null
@@ -315,7 +315,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
                 return await disconnect(connectionId)
             } catch (error) {
                 lastError = error as SSEDisconnectError
-                
+
                 // If it's not a retryable error, don't continue
                 if (!isRetryableError(lastError)) {
                     break
@@ -335,7 +335,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
             error: finalError,
             isDisconnecting: false,
         }))
-        
+
         throw finalError
     }, [disconnect])
 
@@ -353,7 +353,7 @@ export const useSSEDisconnect = (options: UseSSEDisconnectOptions): UseSSEDiscon
     useEffect(() => {
         // Capture current ref value for cleanup
         const activeTimeouts = activeTimeoutsRef.current
-        
+
         return () => {
             // Clear all active timeouts to prevent memory leaks
             activeTimeouts.forEach(timeoutId => {

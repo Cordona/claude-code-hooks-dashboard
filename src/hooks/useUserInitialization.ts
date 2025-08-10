@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState, useRef } from 'react'
-import type { UserInitializationError } from '@/types'
-import { createUserInitializationError } from '@/types'
-import { getUserInitializeEndpoint } from '@/utils'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import type {UserInitializationError} from '@/types'
+import {createUserInitializationError} from '@/types'
+import {getUserInitializeEndpoint} from '@/utils'
 
 interface UserInitializationState {
     readonly userInitialized: boolean
@@ -28,33 +28,33 @@ const INITIALIZATION_RETRY_DELAY = 2000
 
 /**
  * Hook for managing user initialization in the backend system
- * 
+ *
  * Handles the POST request to register/initialize an authenticated user in the backend.
  * Provides automatic retry logic with exponential backoff and proper error handling
  * using discriminated union types for type-safe error management.
- * 
+ *
  * @param options - Configuration options for user initialization
  * @param options.isAuthenticated - Whether the user is currently authenticated
  * @param options.accessToken - JWT access token for API authentication
- * 
+ *
  * @returns User initialization state and control functions
  * @returns userInitialized - Whether user has been successfully initialized
  * @returns initializingUser - Whether initialization is currently in progress
  * @returns initializationError - Structured error information if initialization failed
  * @returns initializationAttempts - Number of initialization attempts made
  * @returns retryInitialization - Function to manually retry initialization
- * 
+ *
  * @example
  * ```typescript
  * const { userInitialized, initializingUser, retryInitialization } = useUserInitialization({
  *   isAuthenticated: true,
  *   accessToken: 'jwt-token-here'
  * })
- * 
+ *
  * if (initializingUser) {
  *   return <LoadingSpinner />
  * }
- * 
+ *
  * if (!userInitialized) {
  *   return <button onClick={retryInitialization}>Retry Initialization</button>
  * }
@@ -148,7 +148,7 @@ export const useUserInitialization = (options: UseUserInitializationOptions): Us
             })
 
             let initError: UserInitializationError | null = null
-            
+
             if (response.status === 204) {
                 setState((prev) => ({
                     ...prev,
@@ -161,14 +161,14 @@ export const useUserInitialization = (options: UseUserInitializationOptions): Us
             } else {
                 initError = createUserInitializationError.httpError(response.status)
             }
-            
+
             // Handle the error case
             if (initError) {
                 handleInitializationError(initError)
             }
         } catch (error) {
             let initError: UserInitializationError
-            
+
             if (error instanceof Error) {
                 initError = createUserInitializationError.networkError(error.message, error.cause as string)
             } else if (typeof error === 'object' && error !== null && 'type' in error) {
@@ -177,7 +177,7 @@ export const useUserInitialization = (options: UseUserInitializationOptions): Us
             } else {
                 initError = createUserInitializationError.networkError('User initialization failed')
             }
-            
+
             handleInitializationError(initError)
         }
     }, [options.accessToken, handleInitializationError])
