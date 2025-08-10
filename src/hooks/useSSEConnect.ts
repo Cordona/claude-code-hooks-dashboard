@@ -57,24 +57,48 @@ const isClaudeHookEvent = (obj: unknown): obj is ClaudeHookEvent => {
     }
 
     const candidate = obj as Record<string, unknown>
-    // Validate required fields (id, reason, timestamp)
-    const hasRequiredFields = (
-        typeof candidate.id === 'string' &&
-        typeof candidate.reason === 'string' &&
-        typeof candidate.timestamp === 'string'
+    
+    // Validate top-level reason field
+    if (typeof candidate.reason !== 'string') {
+        return false
+    }
+
+    // Validate hookMetadata object structure
+    if (typeof candidate.hookMetadata !== 'object' || candidate.hookMetadata === null) {
+        return false
+    }
+
+    const hookMetadata = candidate.hookMetadata as Record<string, unknown>
+    const hasValidHookMetadata = (
+        typeof hookMetadata.timestamp === 'string' &&
+        (hookMetadata.hookType === 'notification' || hookMetadata.hookType === 'stop') &&
+        typeof hookMetadata.claudeSessionId === 'string' &&
+        typeof hookMetadata.transcriptPath === 'string' &&
+        typeof hookMetadata.userExternalId === 'string' &&
+        typeof hookMetadata.hostEventId === 'string' &&
+        (hookMetadata.contextWorkDirectory === undefined || typeof hookMetadata.contextWorkDirectory === 'string')
     )
 
-    // Validate optional fields if present
-    const hasValidOptionalFields = (
-        (candidate.hookType === undefined || typeof candidate.hookType === 'string') &&
-        (candidate.userExternalId === undefined || typeof candidate.userExternalId === 'string') &&
-        (candidate.contextWorkDirectory === undefined || typeof candidate.contextWorkDirectory === 'string') &&
-        (candidate.type === undefined || typeof candidate.type === 'string') &&
-        (candidate.source === undefined || typeof candidate.source === 'string') &&
-        (candidate.metadata === undefined || (typeof candidate.metadata === 'object' && candidate.metadata !== null))
+    // Validate hostTelemetry object structure
+    if (typeof candidate.hostTelemetry !== 'object' || candidate.hostTelemetry === null) {
+        return false
+    }
+
+    const hostTelemetry = candidate.hostTelemetry as Record<string, unknown>
+    if (typeof hostTelemetry.host_details !== 'object' || hostTelemetry.host_details === null) {
+        return false
+    }
+
+    const hostDetails = hostTelemetry.host_details as Record<string, unknown>
+    const hasValidHostDetails = (
+        typeof hostDetails.hostname === 'string' &&
+        typeof hostDetails.platform === 'string' &&
+        typeof hostDetails.username === 'string' &&
+        (hostDetails.private_ip === undefined || typeof hostDetails.private_ip === 'string') &&
+        (hostDetails.public_ip === undefined || typeof hostDetails.public_ip === 'string')
     )
 
-    return hasRequiredFields && hasValidOptionalFields
+    return hasValidHookMetadata && hasValidHostDetails
 }
 
 /**

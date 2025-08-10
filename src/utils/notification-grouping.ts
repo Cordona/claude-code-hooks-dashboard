@@ -1,58 +1,5 @@
-import type {NotificationData} from '@/types'
+import type {NotificationData, SessionGroup, ProjectGroup, HostGroup} from '@/types'
 
-/**
- * Grouped notifications by context
- */
-export interface NotificationGroup {
-    /** Context identifier (path or 'ungrouped') */
-    contextKey: string
-    /** Display name for the context */
-    contextName: string
-    /** Array of notifications in this context */
-    notifications: NotificationData[]
-    /** Count of notifications in this group */
-    count: number
-    /** Most recent timestamp in this group */
-    latestTimestamp: string
-}
-
-/**
- * Groups notifications by their project context
- * Returns groups sorted by most recent activity
- */
-export const groupNotificationsByContext = (
-    notifications: NotificationData[],
-): NotificationGroup[] => {
-    const grouped = notifications.reduce<Record<string, NotificationData[]>>(
-        (groups, notification) => {
-            const contextKey = notification.projectContext ?? 'ungrouped'
-            groups[contextKey] ??= []
-            groups[contextKey].push(notification)
-            return groups
-        },
-        {},
-    )
-
-    const notificationGroups: NotificationGroup[] = Object.entries(grouped).map(
-        ([contextKey, groupNotifications]) => {
-            const sortedNotifications = [...groupNotifications].sort(
-                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-            )
-
-            return {
-                contextKey,
-                contextName: shortenContextPath(contextKey),
-                notifications: sortedNotifications,
-                count: sortedNotifications.length,
-                latestTimestamp: sortedNotifications[0]?.timestamp ?? '',
-            }
-        },
-    )
-
-    return notificationGroups.sort(
-        (a, b) => new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime(),
-    )
-}
 
 /**
  * Formats context path into user-friendly display name
@@ -119,4 +66,127 @@ const EMPTY_STATE_MESSAGES = [
 export const getRandomEmptyStateMessage = (): string => {
     const randomIndex = Math.floor(Math.random() * EMPTY_STATE_MESSAGES.length)
     return EMPTY_STATE_MESSAGES[randomIndex] ?? 'All clear!'
+}
+
+/**
+ * Groups notifications by Claude session ID
+ * Returns session groups sorted by most recent activity
+ */
+export const groupNotificationsBySession = (
+    notifications: NotificationData[],
+): SessionGroup[] => {
+    const grouped = notifications.reduce<Record<string, NotificationData[]>>(
+        (groups, notification) => {
+            const sessionKey = notification.sessionId ?? 'unknown-session'
+            groups[sessionKey] ??= []
+            groups[sessionKey].push(notification)
+            return groups
+        },
+        {},
+    )
+
+    const sessionGroups: SessionGroup[] = Object.entries(grouped).map(
+        ([sessionId, groupNotifications]) => {
+            const sortedNotifications = [...groupNotifications].sort(
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+            )
+
+            return {
+                sessionId,
+                notifications: sortedNotifications,
+                count: sortedNotifications.length,
+                latestTimestamp: sortedNotifications[0]?.timestamp ?? '',
+            }
+        },
+    )
+
+    return sessionGroups.sort(
+        (a, b) => new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime(),
+    )
+}
+
+/**
+ * Groups notifications by project context with session subgroups
+ * Returns project groups sorted by most recent activity
+ */
+export const groupNotificationsByProject = (
+    notifications: NotificationData[],
+): ProjectGroup[] => {
+    const grouped = notifications.reduce<Record<string, NotificationData[]>>(
+        (groups, notification) => {
+            const contextKey = notification.projectContext ?? 'ungrouped'
+            groups[contextKey] ??= []
+            groups[contextKey].push(notification)
+            return groups
+        },
+        {},
+    )
+
+    const projectGroups: ProjectGroup[] = Object.entries(grouped).map(
+        ([contextKey, groupNotifications]) => {
+            const sessionGroups = groupNotificationsBySession(groupNotifications)
+            const allNotificationsCount = groupNotifications.length
+            const latestTimestamp = sessionGroups[0]?.latestTimestamp ?? ''
+
+            return {
+                contextKey,
+                contextName: shortenContextPath(contextKey),
+                sessionGroups,
+                count: allNotificationsCount,
+                latestTimestamp,
+            }
+        },
+    )
+
+    return projectGroups.sort(
+        (a, b) => new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime(),
+    )
+}
+
+/**
+ * Groups notifications by hostname with project and session subgroups
+ * Returns host groups sorted by most recent activity
+ */
+export const groupNotificationsByHost = (
+    notifications: NotificationData[],
+): HostGroup[] => {
+    const grouped = notifications.reduce<Record<string, NotificationData[]>>(
+        (groups, notification) => {
+            const hostname = notification.hostname ?? 'Unknown Host'
+            groups[hostname] ??= []
+            groups[hostname].push(notification)
+            return groups
+        },
+        {},
+    )
+
+    const hostGroups: HostGroup[] = Object.entries(grouped).map(
+        ([hostname, groupNotifications]) => {
+            const projectGroups = groupNotificationsByProject(groupNotifications)
+            const allNotificationsCount = groupNotifications.length
+            const latestTimestamp = projectGroups[0]?.latestTimestamp ?? ''
+
+            return {
+                hostname,
+                projectGroups,
+                count: allNotificationsCount,
+                latestTimestamp,
+            }
+        },
+    )
+
+    return hostGroups.sort(
+        (a, b) => new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime(),
+    )
+}
+
+/**
+ * Main three-level grouping function: Host > Project > Session
+ * Returns notifications organized in complete hierarchy
+ * Sorted by most recent activity at each level
+ */
+export const groupNotificationsByHostProjectSession = (
+    notifications: NotificationData[],
+): HostGroup[] => {
+    return groupNotificationsByHost(notifications)
 }

@@ -190,7 +190,7 @@ export const useSystemNotifications = (): UseSystemNotificationsReturn => {
         async (event: ClaudeHookEvent): Promise<void> => {
             if (!isSupported || state.permission !== 'granted') return
 
-            const formattedPath = formatProjectContext(event.contextWorkDirectory)
+            const formattedPath = formatProjectContext(event.hookMetadata.contextWorkDirectory)
 
             // Format message with clear labels like requested
             let body = `Message: ${event.reason}`
@@ -231,7 +231,7 @@ export const useSystemNotifications = (): UseSystemNotificationsReturn => {
         const handleClaudeHookEvent = (event: CustomEvent): void => {
             const hookEvent = event.detail as ClaudeHookEvent
 
-            if (hookEvent?.id && hookEvent?.reason && hookEvent?.timestamp) {
+            if (hookEvent?.hookMetadata?.hostEventId && hookEvent?.reason && hookEvent?.hookMetadata?.timestamp) {
                 void showNotificationFromEvent(hookEvent)
             }
         }
