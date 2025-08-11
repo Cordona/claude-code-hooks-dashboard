@@ -3,7 +3,7 @@ import {Box, Button, Typography} from '@mui/material'
 import {DeleteSweep} from '@mui/icons-material'
 import {NotificationContextCard} from '.'
 import {PurgeConfirmationDialog} from '@/components/ui'
-import {getRandomEmptyStateMessage, groupNotificationsByContext} from '@/utils'
+import {getRandomEmptyStateMessage, groupNotificationsByProject} from '@/utils'
 import type {NotificationData} from '@/types'
 
 /**
@@ -32,7 +32,15 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
          * Group notifications by context
          */
         const notificationGroups = useMemo(() => {
-            return groupNotificationsByContext(notifications)
+            const projectGroups = groupNotificationsByProject(notifications)
+            // Convert ProjectGroup[] back to NotificationGroup[] for compatibility with NotificationContextCard
+            return projectGroups.map(group => ({
+                contextKey: group.contextKey,
+                contextName: group.contextName,
+                count: group.count,
+                latestTimestamp: group.latestTimestamp,
+                notifications: group.sessionGroups.flatMap(sessionGroup => sessionGroup.notifications)
+            }))
         }, [notifications])
 
         /**
@@ -149,7 +157,7 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
                             color: 'text.primary',
                         }}
                     >
-                        Projects
+                        Contexts
                     </Typography>
 
                     {/* Purge All Button - only show when there are notifications and purge function is provided */}
@@ -188,7 +196,13 @@ export const NotificationContextGroups: React.FC<NotificationContextGroupsProps>
                 {/* Purge Confirmation Dialog */}
                 <PurgeConfirmationDialog
                     open={isPurgeDialogOpen}
-                    notificationGroups={notificationGroups}
+                    projectGroups={notificationGroups.map(group => ({
+                        contextKey: group.contextKey,
+                        contextName: group.contextName,
+                        sessionGroups: [], // Empty since this is legacy format conversion
+                        count: group.count,
+                        latestTimestamp: group.latestTimestamp,
+                    }))}
                     isLoading={isPurging}
                     onConfirm={handlePurgeConfirm}
                     onCancel={handlePurgeCancel}

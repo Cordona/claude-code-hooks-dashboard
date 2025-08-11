@@ -25,7 +25,13 @@ export const useNotificationData = () => {
         notifications,
         (
             currentNotifications: NotificationData[],
-            action: { type: 'delete' | 'deleteAll' | 'deleteContext'; id?: string; contextKey?: string },
+            action: { 
+                type: 'delete' | 'deleteAll' | 'deleteContext' | 'deleteHost' | 'deleteSession'
+                id?: string
+                contextKey?: string 
+                hostname?: string
+                sessionId?: string
+            },
         ) => {
             switch (action.type) {
                 case 'delete':
@@ -36,6 +42,16 @@ export const useNotificationData = () => {
                     return currentNotifications.filter((notification) => {
                         const notificationContext = notification.projectContext ?? 'ungrouped'
                         return notificationContext !== action.contextKey
+                    })
+                case 'deleteHost':
+                    return currentNotifications.filter((notification) => {
+                        const notificationHostname = notification.hostname ?? 'Unknown Host'
+                        return notificationHostname !== action.hostname
+                    })
+                case 'deleteSession':
+                    return currentNotifications.filter((notification) => {
+                        const notificationSessionId = notification.sessionId ?? 'unknown-session'
+                        return notificationSessionId !== action.sessionId
                     })
                 default:
                     return currentNotifications
@@ -69,18 +85,27 @@ export const useNotificationData = () => {
      */
     const addNotification = useCallback(
         (event: ClaudeHookEvent): void => {
+            const { hookMetadata, hostTelemetry } = event
             const notificationData: NotificationData = {
-                id: event.id,
+                id: hookMetadata.hostEventId, // Extract from hookMetadata.hostEventId
                 message: event.reason, // Map reason to message for display
-                timestamp: event.timestamp,
+                timestamp: hookMetadata.timestamp, // Extract from hookMetadata.timestamp
                 addedAt: new Date().toISOString(),
-                displayTime: formatTime(event.timestamp),
-                displayDate: formatDate(event.timestamp),
-                ...(event.contextWorkDirectory && {projectContext: event.contextWorkDirectory}),
-                ...(event.hookType && {hookType: event.hookType}),
-                ...(event.type && {eventType: event.type}),
-                ...(event.metadata && {metadata: event.metadata}),
-                ...(event.source && {source: event.source}),
+                displayTime: formatTime(hookMetadata.timestamp),
+                displayDate: formatDate(hookMetadata.timestamp),
+                ...(hookMetadata.contextWorkDirectory && {projectContext: hookMetadata.contextWorkDirectory}),
+                ...(hookMetadata.hookType && {hookType: hookMetadata.hookType}),
+                // Extract hostname from host telemetry
+                ...(hostTelemetry?.host_details?.hostname && {hostname: hostTelemetry.host_details.hostname}),
+                // Extract session ID from hook metadata
+                ...(hookMetadata.claudeSessionId && {sessionId: hookMetadata.claudeSessionId}),
+                // Store full event structure in metadata for future use
+                metadata: {
+                    claudeSessionId: hookMetadata.claudeSessionId,
+                    transcriptPath: hookMetadata.transcriptPath,
+                    userExternalId: hookMetadata.userExternalId,
+                    hostTelemetry,
+                },
             }
 
             setNotifications((prev) => {
@@ -160,6 +185,54 @@ export const useNotificationData = () => {
     )
 
     /**
+     * Delete all notifications for a specific hostname with optimistic updates
+     */
+    const deleteAllInHost = useCallback(
+        (hostname: string): void => {
+            // Optimistically update the UI immediately
+            startTransition(() => {
+                setOptimisticNotifications({type: 'deleteHost', hostname})
+            })
+
+            // Perform actual deletion in transition
+            const filterNotifications = (prev: NotificationData[]) =>
+                prev.filter((notification) => {
+                    const notificationHostname = notification.hostname ?? 'Unknown Host'
+                    return notificationHostname !== hostname
+                })
+
+            startTransition(() => {
+                setNotifications(filterNotifications)
+            })
+        },
+        [setOptimisticNotifications, startTransition],
+    )
+
+    /**
+     * Delete all notifications for a specific session ID with optimistic updates
+     */
+    const deleteAllInSession = useCallback(
+        (sessionId: string): void => {
+            // Optimistically update the UI immediately
+            startTransition(() => {
+                setOptimisticNotifications({type: 'deleteSession', sessionId})
+            })
+
+            // Perform actual deletion in transition
+            const filterNotifications = (prev: NotificationData[]) =>
+                prev.filter((notification) => {
+                    const notificationSessionId = notification.sessionId ?? 'unknown-session'
+                    return notificationSessionId !== sessionId
+                })
+
+            startTransition(() => {
+                setNotifications(filterNotifications)
+            })
+        },
+        [setOptimisticNotifications, startTransition],
+    )
+
+    /**
      * Load notifications from localStorage on mount
      */
     useEffect(() => {
@@ -222,7 +295,7 @@ export const useNotificationData = () => {
         const handleClaudeHookEvent = (event: CustomEvent): void => {
             const hookEvent = event.detail as ClaudeHookEvent
 
-            if (hookEvent?.id && hookEvent?.reason && hookEvent?.timestamp) {
+            if (hookEvent?.hookMetadata?.hostEventId && hookEvent?.reason && hookEvent?.hookMetadata?.timestamp) {
                 addNotification(hookEvent)
             }
         }
@@ -243,6 +316,8 @@ export const useNotificationData = () => {
         deleteNotification,
         deleteAllNotifications,
         deleteAllInContext,
+        deleteAllInHost,
+        deleteAllInSession,
         count: optimisticNotifications.length,
     }
 }

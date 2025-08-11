@@ -17,7 +17,7 @@ import {
     useTheme
 } from '@mui/material'
 import {DeleteSweep} from '@mui/icons-material'
-import type {NotificationGroup} from '@/utils'
+import type {ProjectGroup} from '@/types'
 
 /**
  * Props for PurgeConfirmationDialog component
@@ -25,8 +25,8 @@ import type {NotificationGroup} from '@/utils'
 export interface PurgeConfirmationDialogProps {
     /** Whether the dialog is open */
     open: boolean
-    /** Notification groups to be deleted */
-    notificationGroups: NotificationGroup[]
+    /** Project groups to be deleted */
+    projectGroups: ProjectGroup[]
     /** Whether the purge operation is in progress */
     isLoading?: boolean
     /** Callback when user confirms the purge */
@@ -42,7 +42,7 @@ export interface PurgeConfirmationDialogProps {
 export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = React.memo(
     function PurgeConfirmationDialog({
                                          open,
-                                         notificationGroups,
+                                         projectGroups,
                                          isLoading = false,
                                          onConfirm,
                                          onCancel,
@@ -51,8 +51,8 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
         const [confirmationText, setConfirmationText] = useState('')
 
         // Calculate totals
-        const totalNotifications = notificationGroups.reduce((sum, group) => sum + group.count, 0)
-        const totalProjects = notificationGroups.length
+        const totalNotifications = projectGroups.reduce((sum, group) => sum + group.count, 0)
+        const totalContexts = projectGroups.length
 
         // Check if user has typed the correct confirmation
         const isConfirmationValid = confirmationText.toLowerCase() === 'purge all'
@@ -206,14 +206,14 @@ export const PurgeConfirmationDialog: React.FC<PurgeConfirmationDialogProps> = R
                                     fontWeight: 600,
                                 }}
                             >
-                                {totalProjects} project{totalProjects === 1 ? '' : 's'}
+                                {totalContexts} context{totalContexts === 1 ? '' : 's'}
                             </Box>
                             .
                         </Typography>
 
-                        {notificationGroups.length > 0 && (
+                        {projectGroups.length > 0 && (
                             <Box sx={{mb: 4, mt: 3}}>
-                                {notificationGroups.map((group) => (
+                                {projectGroups.map((group) => (
                                     <Typography
                                         key={group.contextKey}
                                         variant="body2"

@@ -1,21 +1,31 @@
 import type {FC} from 'react'
-import {useState} from 'react'
-import {Box, IconButton, Slide} from '@mui/material'
+import {useState, useCallback, useMemo, startTransition} from 'react'
+import {Box, IconButton, Slide, Button} from '@mui/material'
+import {DeleteSweep} from '@mui/icons-material'
 import {useAudioNotifications, useAuthStatus, useNotificationData, useSystemNotifications,} from '@/hooks'
-import {ErrorBoundary, Menu, NotificationContextGroups, StatusIndicators, ThemeSwitcher,} from '@/components'
+import {ErrorBoundary, Menu, NotificationHostGroups, StatusIndicators, ThemeSwitcher, PurgeConfirmationDialog} from '@/components'
 import type {OIDCUser} from './auth'
 import {AuthGuard, BlurredUsernameSelection, UserProfile} from './auth'
+import {groupNotificationsByHostProjectSession} from '@/utils'
 
 /**
  * The main Dashboard Component
  * Handles the primary dashboard interface with authentication state
  */
 export const Dashboard: FC = () => {
-    const {notifications, deleteNotification, deleteAllInContext, deleteAllNotifications} =
-        useNotificationData()
+    const {
+        notifications, 
+        deleteNotification, 
+        deleteAllInContext, 
+        deleteAllInHost,
+        deleteAllInSession,
+        deleteAllNotifications
+    } = useNotificationData()
     const {isAuthenticated, user} = useAuthStatus()
     const [showUsernameSelection, setShowUsernameSelection] = useState(false)
     const [isAuthMinimized, setIsAuthMinimized] = useState(false)
+    const [isPurgeDialogOpen, setIsPurgeDialogOpen] = useState(false)
+    const [isPurging, setIsPurging] = useState(false)
 
     // Initialize audio and system notifications
     // Note: SSE connection is established by ConnectionStatus component
@@ -39,6 +49,60 @@ export const Dashboard: FC = () => {
         setIsAuthMinimized(false)
         setShowUsernameSelection(true)
     }
+
+    /**
+     * Handle purge button click
+     */
+    const handlePurgeClick = useCallback(() => {
+        startTransition(() => {
+            setIsPurgeDialogOpen(true)
+        })
+    }, [])
+
+    /**
+     * Handle purge confirmation
+     */
+    const handlePurgeConfirm = useCallback(async () => {
+        try {
+            startTransition(() => {
+                setIsPurging(true)
+            })
+            deleteAllNotifications()
+            startTransition(() => {
+                setIsPurgeDialogOpen(false)
+            })
+        } catch (error) {
+            // Handle purge errors by logging and maintaining stable UI state
+            // eslint-disable-next-line no-console
+            console.error('Failed to purge notifications:', error instanceof Error ? error.message : 'Unknown error')
+
+            // Error handled: Log error and ensure dialog closes so user can retry
+            startTransition(() => {
+                setIsPurgeDialogOpen(false)
+            })
+
+            // For now, error is handled by logging and keeping the UI stable
+        } finally {
+            startTransition(() => {
+                setIsPurging(false)
+            })
+        }
+    }, [deleteAllNotifications])
+
+    /**
+     * Handle purge dialog cancel
+     */
+    const handlePurgeCancel = useCallback(() => {
+        startTransition(() => {
+            setIsPurgeDialogOpen(false)
+        })
+    }, [])
+
+    // Get project groups for PurgeConfirmationDialog
+    const projectGroups = useMemo(() => {
+        const hostGroups = groupNotificationsByHostProjectSession(notifications)
+        return hostGroups.flatMap(hostGroup => hostGroup.projectGroups)
+    }, [notifications])
 
     return (
         <Box
@@ -65,6 +129,32 @@ export const Dashboard: FC = () => {
                 >
                     <Box sx={{display: 'flex', gap: 2, alignItems: 'center'}}>
                         <ThemeSwitcher/>
+                        
+                        {/* Purge All Button - Safe location away from muscle memory areas */}
+                        {notifications.length > 0 && (
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                startIcon={<DeleteSweep/>}
+                                onClick={handlePurgeClick}
+                                disabled={isPurging}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 400,
+                                    fontSize: '0.75rem',
+                                    minWidth: 'auto',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    opacity: 0.7,
+                                    '&:hover': {
+                                        opacity: 1,
+                                    },
+                                }}
+                            >
+                                Purge ({notifications.length})
+                            </Button>
+                        )}
                     </Box>
                     <Box sx={{display: 'flex', alignItems: 'center'}}>
                         {/* Status Indicators Group */}
@@ -157,12 +247,13 @@ export const Dashboard: FC = () => {
                     >
                         <AuthGuard>
                             <ErrorBoundary>
-                                {/* Context Groups */}
-                                <NotificationContextGroups
+                                {/* Host Groups - Three-level hierarchy */}
+                                <NotificationHostGroups
                                     notifications={notifications}
                                     onDeleteNotification={deleteNotification}
                                     onDeleteAllInContext={deleteAllInContext}
-                                    onPurgeAll={deleteAllNotifications}
+                                    onDeleteAllInHost={deleteAllInHost}
+                                    onDeleteAllInSession={deleteAllInSession}
                                 />
                             </ErrorBoundary>
                         </AuthGuard>
@@ -176,6 +267,15 @@ export const Dashboard: FC = () => {
                 onClose={handleAuthClose}
                 onMinimize={handleAuthMinimize}
                 blurIntensity={2.03}
+            />
+
+            {/* Purge Confirmation Dialog */}
+            <PurgeConfirmationDialog
+                open={isPurgeDialogOpen}
+                projectGroups={projectGroups}
+                isLoading={isPurging}
+                onConfirm={handlePurgeConfirm}
+                onCancel={handlePurgeCancel}
             />
         </Box>
     )

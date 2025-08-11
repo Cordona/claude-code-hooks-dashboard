@@ -4,27 +4,86 @@
  */
 
 /**
- * Core notification data structure received from SSE events
+ * Hook metadata structure from Claude Code Hooks service
  */
-export interface ClaudeHookEvent {
-    /** Unique identifier for the notification */
-    id: string
-    /** Hook type from backend (now received as camelCase hookType) - optional for backward compatibility */
-    hookType?: string
-    /** Main notification message/reason */
-    reason: string
+export interface HookMetadata {
     /** ISO timestamp when event occurred */
     timestamp: string
+    /** Hook type from backend */
+    hookType: "notification" | "stop"
+    /** Claude session identifier */
+    claudeSessionId: string
+    /** Full path to session transcript */
+    transcriptPath: string
     /** Optional project context path */
     contextWorkDirectory?: string
-    /** User external ID - optional for backward compatibility */
-    userExternalId?: string
-    /** Event type (e.g., 'plan_ready', 'tool_use', etc.) */
-    type?: string
-    /** Additional event metadata */
-    metadata?: Record<string, unknown>
-    /** Event source or origin */
-    source?: string
+    /** User external ID */
+    userExternalId: string
+    /** Unique event ID (replaces old 'id' field) */
+    hostEventId: string
+}
+
+/**
+ * Host details structure from telemetry
+ */
+export interface HostDetails {
+    /** Machine hostname */
+    hostname: string
+    /** OS platform (e.g., "macos", "linux") */
+    platform: string
+    /** Internal IP address */
+    private_ip?: string
+    /** External IP address */
+    public_ip?: string
+    /** System username */
+    username: string
+}
+
+/**
+ * Daemon details structure from telemetry
+ */
+export interface DaemonDetails {
+    /** Daemon identifier string */
+    id: string
+    /** Process ID number */
+    pid: number
+}
+
+/**
+ * Tmux session structure from telemetry
+ */
+export interface TmuxSession {
+    /** Tmux session ID */
+    session_id: string
+    /** Human-readable session name */
+    session_name: string
+    /** Tmux pane identifier */
+    pane_id: string
+}
+
+/**
+ * Host telemetry structure containing environmental and process context
+ */
+export interface HostTelemetry {
+    /** Host environment details (required) */
+    host_details: HostDetails
+    /** Daemon process details (optional) */
+    daemon_details?: DaemonDetails
+    /** Tmux session information (optional) */
+    tmux_session?: TmuxSession
+}
+
+/**
+ * Core notification data structure received from SSE events
+ * Updated to match new nested payload structure from Claude Code Hooks service
+ */
+export interface ClaudeHookEvent {
+    /** Main notification message/reason */
+    reason: string
+    /** Event context and identification */
+    hookMetadata: HookMetadata
+    /** Rich environmental and process context */
+    hostTelemetry: HostTelemetry
 }
 
 /**
@@ -54,37 +113,12 @@ export interface NotificationData {
     metadata?: Record<string, unknown>
     /** Event source or origin */
     source?: string
+    /** Machine hostname from host telemetry */
+    hostname?: string
+    /** Claude session identifier */
+    sessionId?: string
 }
 
-/**
- * Notification table component props
- */
-export interface NotificationTableProps {
-    /** Array of notifications to display */
-    notifications: NotificationData[]
-    /** Callback when individual notification is deleted */
-    onDeleteNotification: (id: string) => void
-    /** Callback when all notifications are deleted */
-    onDeleteAll: () => void
-}
-
-/**
- * Table column definitions for consistent layout
- */
-export interface TableColumn {
-    /** Column identifier */
-    id: keyof NotificationData | 'actions'
-    /** Display label */
-    label: string
-    /** Column width in CSS units */
-    width: string
-    /** Alignment for column content */
-    align: 'left' | 'center' | 'right'
-    /** Whether column is sortable */
-    sortable: boolean
-    /** Whether column is hidden on mobile */
-    hideOnMobile?: boolean
-}
 
 /**
  * System notification permission states
@@ -139,4 +173,48 @@ export interface UseSystemNotificationsReturn {
     testNotification: () => Promise<void>
     /** Check the current permission status */
     checkPermission: () => void
+}
+
+/**
+ * Session group - notifications grouped by Claude session ID
+ */
+export interface SessionGroup {
+    /** Claude session identifier */
+    readonly sessionId: string
+    /** Array of notifications in this session */
+    readonly notifications: NotificationData[]
+    /** Count of notifications in this session */
+    readonly count: number
+    /** Most recent timestamp in this session */
+    readonly latestTimestamp: string
+}
+
+/**
+ * Project group - session groups within a project context
+ */
+export interface ProjectGroup {
+    /** Context identifier (path or 'ungrouped') */
+    readonly contextKey: string
+    /** Display name for the context */
+    readonly contextName: string
+    /** Array of session groups in this project */
+    readonly sessionGroups: SessionGroup[]
+    /** Count of all notifications in this project */
+    readonly count: number
+    /** Most recent timestamp in this project */
+    readonly latestTimestamp: string
+}
+
+/**
+ * Host group - project groups within a hostname
+ */
+export interface HostGroup {
+    /** Machine hostname from host telemetry */
+    readonly hostname: string
+    /** Array of project groups in this host */
+    readonly projectGroups: ProjectGroup[]
+    /** Count of all notifications in this host */
+    readonly count: number
+    /** Most recent timestamp in this host */
+    readonly latestTimestamp: string
 }

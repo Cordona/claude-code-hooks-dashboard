@@ -1,6 +1,7 @@
 import React, {useActionState, useCallback, useState} from 'react'
 import {Box, Collapse, IconButton, Typography, useMediaQuery, useTheme} from '@mui/material'
-import {Check, Close, ContentCopy, ExpandLess, ExpandMore} from '@mui/icons-material'
+import {Check, Close, ContentCopy, ReplyOutlined, ExpandLess, ExpandMore} from '@mui/icons-material'
+import {useClipboard} from '@/hooks/useClipboard'
 import type {NotificationData} from '@/types'
 
 /**
@@ -22,28 +23,8 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
         const theme = useTheme()
         const isMobile = useMediaQuery(theme.breakpoints.down('md'))
         const [isExpanded, setIsExpanded] = useState(false)
-        const [copiedItemId, setCopiedItemId] = useState<string | null>(null)
+        const {copyToClipboard, isCopied} = useClipboard()
 
-        /**
-         * Copy text to clipboard with visual feedback (matching debug menu style)
-         */
-        const handleCopyToClipboard = useCallback(async (text: string, itemId: string) => {
-            try {
-                await navigator.clipboard.writeText(text)
-                setCopiedItemId(itemId)
-                setTimeout(() => setCopiedItemId(null), 2000)
-
-                if (process.env.NODE_ENV === 'development') {
-                    // eslint-disable-next-line no-console
-                    console.log(`📋 ${itemId} copied to clipboard:`, text)
-                }
-            } catch (error) {
-                if (process.env.NODE_ENV === 'development') {
-                    // eslint-disable-next-line no-console
-                    console.error('Failed to copy to clipboard:', error)
-                }
-            }
-        }, [])
 
         /**
          * Action for deleting notification using React 19 Actions API
@@ -77,6 +58,45 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
             notification.projectContext
         )
 
+        /**
+         * Render detail field with consistent styling
+         */
+        const renderDetailField = useCallback((label: string, value: string, options?: {
+            monospace?: boolean
+            color?: string
+            transform?: 'uppercase' | 'none'
+            minWidth?: string
+        }) => (
+            <Box sx={{mb: 1}}>
+                <Typography
+                    variant="caption"
+                    sx={{
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        display: 'inline-block',
+                        minWidth: options?.minWidth || '80px',
+                    }}
+                >
+                    {label}:
+                </Typography>
+                <Typography
+                    variant="body2"
+                    sx={{
+                        fontFamily: options?.monospace !== false ? 'monospace' : 'inherit',
+                        fontSize: '0.75rem',
+                        color: options?.color || 'text.secondary',
+                        ml: 1,
+                        display: 'inline',
+                        textTransform: options?.transform || 'none',
+                        letterSpacing: options?.transform === 'uppercase' ? '0.025em' : 'normal',
+                        wordBreak: 'break-all',
+                    }}
+                >
+                    {value}
+                </Typography>
+            </Box>
+        ), [])
+
         return (
             <Box>
                 <Box
@@ -86,6 +106,7 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                         py: 1.5,
                         px: 2,
                         borderBottom: hasAdditionalDetails && isExpanded ? 'none' : `1px solid ${theme.palette.divider}`,
+                        cursor: hasAdditionalDetails ? 'pointer' : 'default',
                         '&:hover': {
                             backgroundColor: 'action.hover',
                         },
@@ -93,34 +114,24 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                             opacity: 1,
                         },
                     }}
+                    onClick={hasAdditionalDetails ? handleToggleExpanded : undefined}
                 >
-                    {/* Time - Hidden on mobile */}
-                    {!isMobile && (
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                fontFamily: 'monospace',
-                                fontSize: '0.875rem',
-                                fontWeight: 600,
-                                color: 'text.secondary',
-                                minWidth: '60px',
-                                mr: 2,
-                                textShadow:
-                                    theme.palette.mode === 'light'
-                                        ? '0 1px 2px rgba(0, 0, 0, 0.1)'
-                                        : '0 1px 2px rgba(0, 0, 0, 0.3)',
-                            }}
-                        >
-                            {notification.displayTime}
-                        </Typography>
-                    )}
+                    {/* Reply Icon - Better represents Claude responses */}
+                    <ReplyOutlined
+                        sx={{
+                            color: 'primary.main',
+                            fontSize: '1rem',
+                            mr: { xs: 1, sm: 1.5 }, // Responsive margin: tighter on mobile
+                            opacity: 0.9
+                        }}
+                    />
 
                     {/* Message - Takes up remaining space */}
                     <Box sx={{flex: 1, minWidth: 0}}>
                         <Typography
                             variant="body1"
                             sx={{
-                                fontWeight: 400,
+                                fontWeight: 500,
                                 lineHeight: 1.4,
                                 color: 'text.primary',
                                 overflow: 'hidden',
@@ -150,37 +161,68 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                         )}
                     </Box>
 
-                    {/* Date - Hidden on mobile */}
+                    {/* Consolidated Timestamp - Right-aligned */}
                     {!isMobile && (
                         <Typography
                             variant="body2"
                             sx={{
                                 fontFamily: 'monospace',
-                                fontSize: '0.875rem',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Responsive font size
                                 fontWeight: 600,
                                 color: 'text.secondary',
-                                minWidth: '96px',
+                                minWidth: { xs: '120px', sm: '140px' }, // Responsive width
                                 textAlign: 'right',
-                                mr: 2,
+                                mr: { xs: 0.5, sm: 1 }, // Responsive margin
                                 textShadow:
                                     theme.palette.mode === 'light'
                                         ? '0 1px 2px rgba(0, 0, 0, 0.1)'
                                         : '0 1px 2px rgba(0, 0, 0, 0.3)',
                             }}
                         >
-                            {notification.displayDate}
+                            {notification.displayDate} {notification.displayTime}
                         </Typography>
                     )}
+
+                    {/* Delete Button - Positioned before expand button for consistency */}
+                    <Box component="form" action={deleteAction} sx={{display: 'inline'}}>
+                        <input type="hidden" name="notificationId" value={notification.id}/>
+                        <IconButton
+                            type="submit"
+                            size="small"
+                            className="delete-button"
+                            disabled={deleteState.isDeleting}
+                            aria-label={`Delete notification: ${notification.message}`}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{
+                                opacity: 0,
+                                transition: 'all 0.2s ease-in-out',
+                                color: '#f44336',
+                                width: 20, // Smallest in hierarchy: 32px→28px→24px→20px
+                                height: 20,
+                                ml: 0.5,
+                                '&:hover': {
+                                    opacity: 1,
+                                    backgroundColor: '#f44336',
+                                    color: 'error.contrastText',
+                                },
+                            }}
+                        >
+                            <Close sx={{fontSize: '0.625rem'}}/> {/* Tiny icon */}
+                        </IconButton>
+                    </Box>
 
                     {/* Expand Button - Only show if there are additional details */}
                     {hasAdditionalDetails && (
                         <IconButton
                             size="small"
-                            onClick={handleToggleExpanded}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleToggleExpanded()
+                            }}
                             aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
                             sx={{
                                 color: 'primary.main',
-                                ml: 1,
+                                ml: 0.5,
                                 transition: 'all 0.2s ease-in-out',
                                 '&:hover': {
                                     backgroundColor: 'action.hover',
@@ -191,30 +233,6 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                             {isExpanded ? <ExpandLess fontSize="small"/> : <ExpandMore fontSize="small"/>}
                         </IconButton>
                     )}
-
-                    {/* Delete Button */}
-                    <Box component="form" action={deleteAction} sx={{display: 'inline'}}>
-                        <input type="hidden" name="notificationId" value={notification.id}/>
-                        <IconButton
-                            type="submit"
-                            size="small"
-                            className="delete-button"
-                            disabled={deleteState.isDeleting}
-                            aria-label={`Delete notification: ${notification.message}`}
-                            sx={{
-                                opacity: 0,
-                                transition: 'all 0.2s ease-in-out',
-                                color: '#f44336',
-                                ml: 1,
-                                '&:hover': {
-                                    backgroundColor: '#f44336',
-                                    color: 'error.contrastText',
-                                },
-                            }}
-                        >
-                            <Close fontSize="small"/>
-                        </IconButton>
-                    </Box>
                 </Box>
 
                 {/* Collapsible Event Details */}
@@ -243,35 +261,10 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                             </Typography>
 
                             {/* Hook Type - Primary classification (comes first) */}
-                            {notification.hookType && (
-                                <Box sx={{mb: 1}}>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            fontWeight: 600,
-                                            color: 'text.secondary',
-                                            display: 'inline-block',
-                                            minWidth: '80px',
-                                        }}
-                                    >
-                                        Hook type:
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.8rem',
-                                            fontWeight: 600,
-                                            color: 'primary.main',
-                                            ml: 1,
-                                            display: 'inline',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.025em',
-                                        }}
-                                    >
-                                        {notification.hookType}
-                                    </Typography>
-                                </Box>
+                            {notification.hookType && renderDetailField(
+                                'Hook type', 
+                                notification.hookType, 
+                                { color: 'primary.main', transform: 'uppercase' }
                             )}
 
                             {/* Event ID - With copy functionality matching debug menu style */}
@@ -305,7 +298,7 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                                         onClick={(e) => {
                                             e.preventDefault()
                                             e.stopPropagation()
-                                            void handleCopyToClipboard(notification.id, `event-id-${notification.id}`)
+                                            copyToClipboard(notification.id, `event-id-${notification.id}`).catch(() => {})
                                         }}
                                         sx={{
                                             width: 20,
@@ -319,7 +312,7 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                                             },
                                         }}
                                     >
-                                        {copiedItemId === `event-id-${notification.id}` ? (
+                                        {isCopied(`event-id-${notification.id}`) ? (
                                             <Check
                                                 sx={{
                                                     fontSize: 12,
@@ -341,91 +334,20 @@ export const ContextNotificationItem: React.FC<ContextNotificationItemProps> = R
                             </Box>
 
                             {/* Event Type */}
-                            {notification.eventType && (
-                                <Box sx={{mb: 1}}>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            fontWeight: 600,
-                                            color: 'text.secondary',
-                                            display: 'inline-block',
-                                            minWidth: '80px',
-                                        }}
-                                    >
-                                        Type:
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.75rem',
-                                            color: 'primary.main',
-                                            ml: 1,
-                                            display: 'inline',
-                                        }}
-                                    >
-                                        {notification.eventType}
-                                    </Typography>
-                                </Box>
+                            {notification.eventType && renderDetailField(
+                                'Type', 
+                                notification.eventType, 
+                                { color: 'primary.main' }
                             )}
 
                             {/* Source */}
-                            {notification.source && (
-                                <Box sx={{mb: 1}}>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            fontWeight: 600,
-                                            color: 'text.secondary',
-                                            display: 'inline-block',
-                                            minWidth: '80px',
-                                        }}
-                                    >
-                                        Source:
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.75rem',
-                                            color: 'text.secondary',
-                                            ml: 1,
-                                            display: 'inline',
-                                        }}
-                                    >
-                                        {notification.source}
-                                    </Typography>
-                                </Box>
-                            )}
+                            {notification.source && renderDetailField('Source', notification.source)}
 
                             {/* Context Work Directory */}
-                            {notification.projectContext && (
-                                <Box sx={{mb: 1}}>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            fontWeight: 600,
-                                            color: 'text.secondary',
-                                            display: 'inline-block',
-                                            minWidth: '120px',
-                                        }}
-                                    >
-                                        Context work directory:
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.75rem',
-                                            color: 'text.secondary',
-                                            ml: 1,
-                                            display: 'inline',
-                                            wordBreak: 'break-all',
-                                        }}
-                                    >
-                                        {notification.projectContext}
-                                    </Typography>
-                                </Box>
+                            {notification.projectContext && renderDetailField(
+                                'Context work directory', 
+                                notification.projectContext, 
+                                { minWidth: '120px' }
                             )}
 
                             {/* Metadata */}

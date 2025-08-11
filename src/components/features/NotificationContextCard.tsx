@@ -3,7 +3,24 @@ import {Box, Collapse, IconButton, Paper, Typography, useTheme} from '@mui/mater
 import {DeleteOutline, ExpandLess, ExpandMore, FolderOutlined} from '@mui/icons-material'
 import {ContextNotificationItem} from '.'
 import {ConfirmationDialog} from '@/components/ui'
-import type {NotificationGroup} from '@/utils'
+import type {NotificationData} from '@/types'
+
+/**
+ * Notification group format for context cards
+ * Local interface for this component's data structure
+ */
+interface NotificationGroup {
+    /** Context identifier (path or 'ungrouped') */
+    contextKey: string
+    /** Display name for the context */
+    contextName: string
+    /** Array of notifications in this context */
+    notifications: NotificationData[]
+    /** Count of notifications in this group */
+    count: number
+    /** Most recent timestamp in this group */
+    latestTimestamp: string
+}
 
 /**
  * Props for NotificationContextCard component
